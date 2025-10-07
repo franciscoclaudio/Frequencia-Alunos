@@ -1,4 +1,3 @@
-# Frequencia-Alunos(https://github.com/user-attachments/files/22742768/readme.md)
 # 📊 Sistema de Registro de Frequência e Observações (Local/HTML)
 
 Este é um aplicativo web simples e de página única (SPA) desenvolvido em **HTML, CSS e JavaScript puro** para facilitar o registro rápido de frequência e observações pedagógicas de alunos por turma.
