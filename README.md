@@ -2,6 +2,8 @@
 
 Este é um aplicativo web simples e de página única (SPA) desenvolvido em **HTML, CSS e JavaScript puro** para facilitar o registro rápido de frequência e observações pedagógicas de alunos por turma.
 
+Para utilizá-lo clique aqui:
+
 O foco é na **usabilidade offline** e na geração de um arquivo de texto estruturado (`.txt`) para posterior análise ou importação de dados.
 
 ## ✨ Funcionalidades Principais
