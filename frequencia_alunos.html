@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequência Alunos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .logo-img {
+            width: 200px; 
+            height:200px; 
+            margin-right: 15px;
+            object-fit: contain; 
+        }
+        
+        .header-logo h1 {
+            font-size: 2.2em; 
+            color: #2c3e50; 
+            margin: 0;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-weight: normal;
+        }
+
+        .control-block {
+            background-color: #e6f7ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .upload-block {
+             background-color: #f0fff0;
+             padding: 15px;
+             border-radius: 5px;
+             margin-bottom: 20px;
+             display: flex;
+             align-items: center;
+             font-weight: bold;
+        }
+
+        .control-block label, .upload-block label {
+            margin-right: 10px;
+            color: #004085;
+        }
+        
+        #dataAula, #turmasSelect {
+            padding: 8px;
+            border: 1px solid #b3e0ff;
+            border-radius: 4px;
+        }
+
+
+        fieldset {
+            border: none;
+            padding: 0;
+            margin-bottom: 25px;
+        }
+
+        legend {
+            background-color: #b3e0ff; 
+            color: #1a4d6e;
+            font-weight: bold;
+            font-size: 1.1em;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 4px;
+        }
+        
+        .aluno-field-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+            padding-left: 15px;
+        }
+
+        .aluno-field-group label {
+            font-weight: normal;
+            margin-bottom: 0; 
+            width: 120px;
+        }
+        
+        .field-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .field-row input[type="radio"] {
+            align-self: center; 
+            margin-right: 5px; 
+        }
+
+        .field-row input[type="radio"] + label {
+            align-self: center; 
+            margin-right: 15px;
+            width: auto; 
+        }
+        
+        .field-row input[type="text"], .field-row select {
+            flex-grow: 1;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            max-width: 250px;
+        }
+        
+        fieldset:not(:last-of-type)::after {
+            content: '';
+            display: block;
+            border-bottom: 1px dotted #ccc;
+            margin-top: 25px;
+            margin-bottom: 0;
+        }
+
+        button {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #34495e;
+        }
+        
+        #resultado {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="header-logo">
+            <img id="logoPrincipal" 
+                 class="logo-img" 
+                 src="https://i0.wp.com/crescercomeducacao.com.br/wp-content/uploads/2025/05/bolsa-futuro-digital.jpg?fit=900%2C900&ssl=1" 
+                 alt="Logo Escola"> 
+            
+            <h1>Escola Saber</h1>
+        </div>
+        
+        <h2>Registro de Frequência e Observações</h2>
+        
+        <p>
+            <label for="logoUpload">Substituir Logo:</label>
+            <input type="file" id="logoUpload" accept="image/*" onchange="previewImage(event, 'logoPrincipal')">
+        </p>
+        
+        <div class="control-block">
+            <label for="dataAula">Data da aula:</label>
+            <input type="date" id="dataAula" name="data" required>
+        </div>
+
+        <div class="control-block">
+            <label for="turmasSelect">Selecionar Turma:</label>
+            <select id="turmasSelect" onchange="carregarTurmaSelecionada(this.value); toggleUploadBlock(this.value);">
+                <option value="">-- Selecione uma turma --</option>
+                <option value="Turma 10C PE (36 Alunos)">Turma 10C PE (36 Alunos)</option>
+                <option value="NOVA_TURMA_UPLOAD">Adicionar Nova Turma...</option>
+            </select>
+        </div>
+
+        <div class="upload-block" id="uploadBlockContainer" style="display: none;"> 
+            <label for="listaAlunosUpload">Carregar arquivo TXT (Ex:Turma_10D_PE.txt):</label>
+            <input type="file" id="listaAlunosUpload" accept=".txt" onchange="processarListaAlunos(event)">
+        </div>
+        
+        <form id="FrequenciaGeral">  
+            <div id="alunosContainer">
+                <p>Selecione ou carregue uma turma para iniciar a chamada.</p>
+            </div>
+        
+            <br>
+            <button type="button" onclick="coletarDados()">Submeter</button>
+        </form>
+        <p id="resultado"></p>
+        
+    </div>
+
+
+<script>
+    let studentList = [];
+
+    const classes = {
+        'Turma 10C PE (36 Alunos)': [
+            "Maria Eduarda de Almeida Custódio", "Maria Isabel da Penha Marques", "Mariana Marques da Silva", 
+            "MATEUS RAMGUND PEREIRA", "Mavana Priscila de Oliveira", "RAYSSA DE PAULA ALMEIDA NEPOMUCENO", 
+            "Sophia Maria Lima da Costa", "Stela Magela Valdete da Silva", "Tupinangé João Caboclo Da Silva", 
+            "Vinicius Franco da Silva", "Washington Luiz Dantas Júnior", "Anny Monique Arcanjo Rocha", 
+            "Antonio Francisco Gama Neto", "Demétrius Vinícius Ferreira da Silva", "Diêgo Claudiano da Silva", 
+            "Edvania chaves de Araujo", "Matheus Alves Cruz da Silva", "Rebeka Raiany Barbosa dos Santos", 
+            "Rodrigo Barros Mendes da Silva", "Thatiane Cavalcanti Alves", "Natália Pimenta Da franca", 
+            "Isabela Dias Albuquerque", "Daylane Duarte", "Jessica Santos", "JOSENILDA Teodoro da Costa", 
+            "Thiago Valença de Melo", "Erica Flavia Almeida gomes", "Evellyn Mayara da Silva Ramalho", 
+            "Francisco Cláudio Almeida da Silva Junior", "gabriel vinicius soares de lima", "Guilherme Guimarães da Silva Aires",
+            "Isabela Garcia Menezes", "Isabelly Victória Nascimento dos Santos", "Jefferson Fernandes Souza do Nascimento", 
+            "JULIANA MARIA DA SILVA DO NASCIMENTO", "Luiz Fellipe Bezerra da Silva"
+        ],
+    };
+
+    window.onload = function() {
+        const select = document.getElementById('turmasSelect');
+        
+        for (const className in classes) {
+            if (select.querySelector(`option[value="${className}"]`)) {
+                continue;
+            }
+            const option = document.createElement('option');
+            option.value = className;
+            option.textContent = className;
+            const novaTurmaOption = select.querySelector('option[value="NOVA_TURMA_UPLOAD"]');
+            select.insertBefore(option, novaTurmaOption);
+        }
+        
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('dataAula').value = today;
+    };
+    
+    function toggleUploadBlock(selectedValue) {
+        const uploadBlock = document.getElementById('uploadBlockContainer');
+        const alunosContainer = document.getElementById('alunosContainer');
+        
+        if (selectedValue === 'NOVA_TURMA_UPLOAD') {
+            uploadBlock.style.display = 'flex';
+            alunosContainer.innerHTML = '<p>Selecione o arquivo da turma (.txt) para carregar a lista de alunos.</p>';
+            studentList = [];
+        } else {
+            uploadBlock.style.display = 'none';
+        }
+    }
+
+    function gerarCampoAluno(nomeAluno, idIndex) {
+        const id = idIndex; 
+        
+        return `
+            <fieldset id="aluno${id}">
+                <legend><b>${nomeAluno}</b></legend> 
+                <div class="aluno-field-group">
+                    <div class="field-row">
+                        <label>Frequência:</label>
+                        <input type="radio" id="presente${id}" name="frequencia${id}" value="Presente" required>
+                        <label for="presente${id}">Presente</label>
+                        <input type="radio" id="falta${id}" name="frequencia${id}" value="Falta" required>
+                        <label for="falta${id}">Falta</label>
+                    </div>
+            
+                    <div class="field-row">
+                        <label for="participacao${id}">Participação:</label>
+                        <select id="participacao${id}" name="participacao${id}">
+                            <option value="Muito Participativo">Muito Participativo</option>
+                            <option value="Participativo" selected>Participativo</option>
+                            <option value="Pouco Participativo">Pouco Participativo</option>
+                        </select>
+                    </div>
+            
+                    <div class="field-row">
+                        <label for="harmonia${id}">Harmonia:</label>
+                        <select id="harmonia${id}" name="harmonia${id}">
+                            <option value="Muito Boa">Muito Boa</option>
+                            <option value="Boa" selected>Boa</option>
+                            <option value="Ruim">Ruim</option>
+                        </select>
+                    </div>
+            
+                    <div class="field-row">
+                        <label for="pontualidade${id}">Pontualidade:</label>
+                        <select id="pontualidade${id}" name="pontualidade${id}">
+                            <option value="Muito Boa">Pontual</option>
+                            <option value="Boa" selected>Levemente atrasado</option>
+                            <option value="Ruim">Muito atrasado</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+        `;
+    }
+
+    function carregarAlunosNoContainer(nomes, className) {
+        studentList = nomes;
+        const container = document.getElementById('alunosContainer');
+        container.innerHTML = '';
+
+        if (nomes.length === 0) {
+            container.innerHTML = '<p>Nenhum aluno nesta turma.</p>';
+            document.getElementById('resultado').textContent = `Turma ${className} carregada, mas a lista está vazia.`;
+            return;
+        }
+
+        let htmlCampos = '';
+        nomes.forEach((nome, index) => {
+            htmlCampos += gerarCampoAluno(nome, index + 1); 
+        });
+        
+        container.innerHTML = htmlCampos;
+        document.getElementById('resultado').textContent = `${className} carregada com sucesso!`;
+    }
+
+    function carregarTurmaSelecionada(className) {
+        if (className === 'NOVA_TURMA_UPLOAD') { 
+            document.getElementById('resultado').textContent = '';
+            return;
+        }
+
+        if (!className) {
+            document.getElementById('alunosContainer').innerHTML = '<p>Selecione ou carregue uma turma para iniciar a chamada.</p>';
+            studentList = [];
+            document.getElementById('resultado').textContent = '';
+            return;
+        }
+
+        const nomes = classes[className] || [];
+        carregarAlunosNoContainer(nomes, className);
+    }
+
+    function processarListaAlunos(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const fileName = file.name.replace(/\.txt$/i, '');
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const fileContent = e.target.result;
+            const nomes = fileContent.split(/\r?\n/).map(name => name.trim()).filter(name => name.length > 0);
+            
+            const className = `[NOVA] ${fileName}`;
+            classes[className] = nomes;
+
+            const select = document.getElementById('turmasSelect');
+            let existingOption = select.querySelector(`option[value="${className}"]`);
+            if (!existingOption) {
+                existingOption = document.createElement('option');
+                existingOption.value = className;
+                existingOption.textContent = className;
+                const novaTurmaOption = select.querySelector('option[value="NOVA_TURMA_UPLOAD"]');
+                select.insertBefore(existingOption, novaTurmaOption);
+            }
+            
+            select.value = className;
+            
+            toggleUploadBlock(className); 
+
+            carregarAlunosNoContainer(nomes, className);
+        };
+        reader.readAsText(file);
+    }
+
+    function previewImage(event, targetId) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById(targetId).src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    function formatarDadosParaTXT(dados) {
+        const className = document.getElementById('turmasSelect').value || 'Turma Nao Selecionada';
+        let texto = `REGISTRO DE FREQUÊNCIA E OBSERVAÇÕES - ${className}\n`;
+        texto += `------------------------------------------\n`;
+        texto += `Data da Aula: ${dados.data}\n\n`;
+
+        dados.alunos.forEach((aluno, index) => {
+            texto += `ALUNO: ${aluno.nome}\n`;
+            texto += `  Frequência: ${aluno.frequencia}\n`;
+            texto += `  Participação: ${aluno.participacao}\n`;
+            texto += `  Harmonia: ${aluno.harmonia}\n`;
+            texto += `  Pontualidade: ${aluno.pontualidade}\n`;
+            if (index < dados.alunos.length - 1) {
+                texto += `\n`;
+            }
+        });
+
+        return texto;
+    }
+
+    function coletarDados() {
+        if (studentList.length === 0) {
+            alert("Por favor, selecione ou carregue uma turma antes de submeter.");
+            return;
+        }
+
+        const dados = {
+            data: document.getElementById('dataAula').value,
+            alunos: []
+        };
+
+        if (!dados.data) {
+            alert("Por favor, preencha a data da aula.");
+            return;
+        }
+
+        let todosPreenchidos = true;
+        const className = document.getElementById('turmasSelect').value || 'CUSTOM';
+
+        studentList.forEach((nomeAluno, index) => {
+            const id = index + 1;
+            const frequenciaInput = document.querySelector(`input[name="frequencia${id}"]:checked`);
+            const participacaoSelect = document.getElementById(`participacao${id}`);
+            const harmoniaSelect = document.getElementById(`harmonia${id}`);
+            const pontualidadeSelect = document.getElementById(`pontualidade${id}`);
+            
+            if (!frequenciaInput) {
+                todosPreenchidos = false;
+                document.getElementById(`aluno${id}`).style.border = '2px solid red'; 
+            } else {
+                document.getElementById(`aluno${id}`).style.border = 'none';
+            }
+
+
+            dados.alunos.push({
+                nome: nomeAluno, 
+                frequencia: frequenciaInput ? frequenciaInput.value : 'NÃO PREENCHIDO',
+                participacao: participacaoSelect ? participacaoSelect.value : 'N/A',
+                harmonia: harmoniaSelect ? harmoniaSelect.value : 'N/A',
+                pontualidade: pontualidadeSelect ? pontualidadeSelect.value : 'N/A'
+            });
+        });
+
+        if (!todosPreenchidos) {
+            alert("Por favor, preencha a frequência (Presente/Falta) para todos os alunos antes de submeter.");
+            return;
+        }
+        
+        const conteudoTxt = formatarDadosParaTXT(dados);
+        const blob = new Blob([conteudoTxt], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const nomeArquivo = `Frequencia_${className.replace(/ /g, '_')}_${dados.data}.txt`;
+        a.download = nomeArquivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        document.getElementById('resultado').textContent = `Arquivo '${nomeArquivo}' gerado com sucesso!`;
+    }
+
+</script>
+</body>
+</html>
