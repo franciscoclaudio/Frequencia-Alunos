@@ -2,9 +2,13 @@
 
 Este é um aplicativo web simples e de página única (SPA) desenvolvido em **HTML, CSS e JavaScript puro** para facilitar o registro rápido de frequência e observações pedagógicas de alunos por turma.
 
-**Para utilizá-lo clique aqui: https://franciscoclaudio.github.io/Frequencia-Alunos/frequencia_alunos.html**
-
 O foco é na **usabilidade offline** e na geração de um arquivo de texto estruturado (`.txt`) para posterior análise ou importação de dados.
+
+# 🚀 Acesso ao Projeto
+
+Este projeto está hospedado no GitHub Pages e pode ser acessado em:
+
+[Acesse a Demonstração Aqui](https://franciscoclaudio.github.io/Frequencia-Alunos/)
 
 ## ✨ Funcionalidades Principais
 
