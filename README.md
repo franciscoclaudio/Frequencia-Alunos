@@ -8,7 +8,7 @@ O foco é na **usabilidade offline** e na geração de um arquivo de texto estru
 
 Este projeto está hospedado no GitHub Pages e pode ser acessado em:
 
-[Acesse a aplicação aqui](https://franciscoclaudio.github.io/Frequencia-Alunos/)
+[Acesse a aplicação aqui](https://franciscoclaudio.github.io/Frequencia-Alunos/frequencia_alunos.html)
 
 ## ✨ Funcionalidades Principais
 
