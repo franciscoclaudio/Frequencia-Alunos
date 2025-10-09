@@ -15,7 +15,6 @@
                     },
                     colors: {
                         'primary': '#4f46e5',
-                        // COR SECUNDÁRIA ALTERADA DE LARANJA PARA VERDE
                         'secondary': '#10b981', 
                     }
                 }
@@ -35,7 +34,8 @@
                         <label for="logoUpload" class="text-xs text-center text-primary underline mt-1">Trocar Logo</label>
                         <input type="file" id="logoUpload" accept="image/*" class="hidden">
                     </div>
-                    <div class="flex-grow text-center"> <h1 class="text-xl font-bold text-primary mb-3 text-center">Controle de Frequência</h1>
+                    <div class="flex-grow">
+                        <h1 class="text-xl font-semibold text-primary mb-3">Controle de Frequência</h1>
                         <p id="userIdDisplay" class="text-sm text-gray-500 mt-1">Carregando usuário...</p>
                     </div>
                 </div>
@@ -47,7 +47,8 @@
 
             <div id="appContent" class="hidden space-y-6">
                 <div class="p-4 bg-primary/10 rounded-lg border border-primary/20 shadow-inner">
-                    <h2 class="text-xl font-semibold text-primary mb-3 text-center">Selecione a Turma e Data</h2> <div class="mb-4">
+                    <h2 class="text-xl font-semibold text-primary mb-3">Selecione a Turma e Data</h2>
+                    <div class="mb-4">
                         <label for="classesSelect" class="block text-sm font-medium text-gray-700 mb-1">Turma:</label>
                         <select id="classesSelect" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-secondary focus:border-secondary transition duration-150">
                             <option value="" disabled selected>-- Selecione uma Turma --</option>
@@ -72,10 +73,11 @@
 
                 <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
                     <div class="flex justify-between items-center mb-4 border-b pb-2">
-                        <div class="flex-grow text-center"> <h3 id="currentClassTitle" class="text-xl font-bold text-gray-800">Selecione uma turma acima</h3>
+                        <div>
+                            <h3 id="currentClassTitle" class="text-xl font-bold text-gray-800">Selecione uma turma acima</h3>
                             <p id="dateDisplay" class="text-sm text-gray-500"></p>
                         </div>
-                        <div class="flex space-x-2 flex-shrink-0">
+                        <div class="flex space-x-2">
                             <button id="exportCSVBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 text-sm disabled:opacity-50" disabled>
                                 Exportar CSV
                             </button>
@@ -110,21 +112,4 @@
                     <textarea id="studentListInput" placeholder="Lista de Alunos (Um nome por linha)" rows="5" class="w-full p-3 border border-gray-300 rounded-lg"></textarea>
                     <div>
                         <label for="studentListFile" class="block text-xs text-primary underline cursor-pointer mt-2">Importar lista .txt</label>
-                        <input type="file" id="studentListFile" accept=".txt" class="hidden">
-                    </div>
-                    <div class="flex flex-col sm:flex-row justify-between gap-3 mt-4">
-                        <button id="deleteClassBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 whitespace-nowrap hidden">
-                            Excluir Turma
-                        </button>
-                        <div class="flex justify-end space-x-3 w-full">
-                            <button id="cancelAddClassBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg">Cancelar</button>
-                            <button id="saveClassBtn" class="bg-secondary hover:bg-emerald-600 text-white font-medium py-2 px-4 rounded-lg">Salvar Turma</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script type="module" src="frequencia_app_teste_script.js"></script>
-</body>
-</html>
+                        <input type="file" id="
