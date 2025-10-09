@@ -378,8 +378,16 @@ async function registerFrequency() {
     studentItems.forEach(item => {
         const name = item.dataset.studentName;
         const presenceCheckbox = item.querySelector('.presence-checkbox');
+        // Novos selects
+        const pontualidade = item.querySelector('.pontualidade-select')?.value || "não observado";
+        const harmonia = item.querySelector('.harmonia-select')?.value || "não observado";
+        const participacao = item.querySelector('.participacao-select')?.value || "não observado";
+    
         records[name] = {
-            present: presenceCheckbox.checked
+            present: presenceCheckbox.checked,
+            pontualidade: pontualidade || "não observado",
+            harmonia: harmonia || "não observado",
+            participacao: participacao || "não observado"
         };
     });
 
