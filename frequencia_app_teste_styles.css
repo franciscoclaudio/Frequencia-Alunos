@@ -1,57 +1,89 @@
-/* --- CONFIGURAÇÃO TAILWIND (Mantida aqui por organização, mas o script está no HTML para execução) ---
-tailwind.config = {
-    theme: {
-        extend: {
-            fontFamily: {
-                sans: ['Inter', 'sans-serif'],
-            },
-            colors: {
-                'primary': '#4f46e5', /* Cor principal (Indigo) */
-                'secondary': '#f97316', /* Cor secundária (Orange) */
-            }
-        }
-    }
-}
-*/
-
 /* Estilos de Layout Principal */
 .container-app {
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Alinha o card principal no topo */
+    align-items: flex-start;
     padding: 1rem;
 }
 
 /* Estilo para a lista de alunos (para permitir scroll) */
 .scrollable-content {
-    max-height: 50vh; /* Altura máxima para permitir a rolagem */
+    max-height: 50vh;
     overflow-y: auto;
 }
 
-/* Estilo para esconder o checkbox nativo do switch de presença */
+/* Esconde o checkbox nativo do switch de presença */
 .presence-checkbox {
-    /* Esconde o input checkbox nativo para que possamos estilizar o seu rótulo */
     position: absolute;
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-.presence-toggle-label {
-    /* Garante que o rótulo seja um bloco de clique */
-    display: inline-block;
+/* Label para upload de logo */
+label[for="logoUpload"] {
     cursor: pointer;
+    text-decoration: underline;
+    color: #4f46e5;
+    transition: color 0.2s;
+}
+label[for="logoUpload"]:hover {
+    color: #312e81; /* Indigo-900 */
+    text-decoration: underline wavy;
 }
 
-.presence-checkbox:checked + .presence-toggle-bg {
-    /* Estilo para transição ao marcar (o restante do visual é Tailwind) */
-    transition-duration: 300ms;
+/* Input file escondido (logo) */
+#logoUpload {
+    display: none;
+}
+
+/* Label para upload de lista de alunos */
+label[for="studentListFile"] {
+    cursor: pointer;
+    text-decoration: underline;
+    color: #4f46e5;
+    transition: color 0.2s;
+}
+label[for="studentListFile"]:hover {
+    color: #312e81;
+    text-decoration: underline wavy;
+}
+
+/* Input file escondido (lista .txt) */
+#studentListFile {
+    display: none;
+}
+
+/* Switch customizado extra (opcional) */
+.student-item .presence-checkbox:checked + .block {
+    background-color: #4f46e5 !important; /* Indigo */
+}
+.student-item .presence-checkbox:not(:checked) + .block {
+    background-color: #e5e7eb !important; /* Gray-200 */
+}
+.student-item .dot {
+    transition: transform 0.3s;
+}
+
+/* Botões desabilitados */
+button:disabled,
+button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Toast mensagem */
+#messageToast {
+    z-index: 9999;
+}
+
+/* Modal animação opcional */
+#addClassModal {
+    transition: opacity 0.3s;
 }
 
 /*
-Nota: A maioria dos estilos do aplicativo utiliza classes utilitárias
-diretamente no HTML (Tailwind). Este arquivo contém apenas os estilos
-de ajuste de layout e de componentes (como o switch) que não podem
-ser facilmente expressos como classes utilitárias.
+Nota: A maior parte do visual usa Tailwind direto no HTML.
+Este CSS aprimora botões, labels, switches e campos customizados para a nova lógica.
 */
