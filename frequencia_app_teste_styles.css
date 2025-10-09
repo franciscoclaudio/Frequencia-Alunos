@@ -83,6 +83,41 @@ button[disabled] {
     transition: opacity 0.3s;
 }
 
+/* Selects dos critérios de aluno (pontualidade, harmonia, participação) */
+.student-item select {
+    min-width: 110px;
+    background-color: #f3f4f6; /* gray-100 */
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 6px;
+    font-size: 0.95em;
+    padding: 2px 8px;
+    margin-right: 4px;
+    margin-top: 2px;
+    transition: border-color 0.2s;
+}
+.student-item select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    background-color: #fff;
+}
+
+/* Label dos selects */
+.student-item label.text-xs {
+    margin-right: 8px;
+    margin-bottom: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Responsividade para os critérios */
+@media (max-width: 640px) {
+    .student-item .flex-col.md\:flex-row {
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+}
+
 /*
 Nota: A maior parte do visual usa Tailwind direto no HTML.
 Este CSS aprimora botões, labels, switches e campos customizados para a nova lógica.
