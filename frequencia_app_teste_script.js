@@ -4,14 +4,17 @@ import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged }
 import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, getDocs, where, limit, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 
-// Configurações Globais (Fornecidas pelo ambiente Canvas)
+// --- SEÇÃO DE CONFIGURAÇÃO DE AMBIENTE (FIREBASE) ---
+
+// VARIÁVEIS AUTOMÁTICAS: O ambiente Canvas fornece estas variáveis,
+// que contêm as informações do seu projeto Firebase.
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
 // setLogLevel('debug'); // Descomente para ver logs detalhados do Firebase
 
-// Variáveis de Estado Global
+// Variáveis de Estado Global do DB
 let app, db, auth;
 let userId = null;
 let classes = []; // Cache das turmas
@@ -133,7 +136,7 @@ function renderRoster() {
     saveAttendanceBtn.disabled = false;
 }
 
-// --- Funções de Banco de Dados (Firestore) ---
+// --- FUNÇÕES DE BANCO DE DADOS (FIRESTORE) ---
 
 /**
  * Retorna a referência da coleção base do usuário.
@@ -182,7 +185,7 @@ async function addNewClass() {
             .filter(name => name.length > 0)
             .map(name => ({
                 // Cria um ID único simples para cada aluno
-                id: crypto.randomUUID(),
+                id: crypto.randomUUID(), 
                 name: name
             }));
 
@@ -195,7 +198,7 @@ async function addNewClass() {
         await addDoc(getUserCollection('classes'), {
             name: className,
             // É melhor armazenar a lista de alunos diretamente aqui para simplicidade
-            students: students,
+            students: students, 
             createdAt: new Date().toISOString()
         });
 
@@ -333,7 +336,7 @@ async function exportData() {
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
 
-        if (link.download !== undefined) {
+        if (link.download !== undefined) { 
             const url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
             link.setAttribute("download", filename);
