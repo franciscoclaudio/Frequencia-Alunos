@@ -27,15 +27,19 @@
     <div class="container-app">
         <div class="w-full max-w-2xl bg-white p-6 md:p-8 rounded-xl shadow-2xl space-y-6">
             <header class="pb-4 border-b border-gray-200">
+                <!-- LOGO E TÍTULO -->
                 <div class="flex items-center space-x-3 mb-2">
-                    <img id="logoImg" src="img/logo.png" 
-                         alt="Logo do Aplicativo" 
-                         class="w-12 h-12 rounded-full shadow-md object-cover flex-shrink-0">
-                    <h1 class="text-3xl font-extrabold text-primary">Registro de Frequência 🗓️</h1>
-                    <!-- Botão para upload da logo -->
-                    <label for="logoUpload" class="ml-2 cursor-pointer text-xs text-primary underline">Alterar Logo</label>
-                    <input type="file" id="logoUpload" accept="image/*" class="hidden">
+                    <div class="flex flex-col items-center">
+                        <img id="logoImg" src="img/logo.png"
+                            alt="Logo do Aplicativo"
+                            class="w-12 h-12 rounded-full shadow-md object-cover flex-shrink-0">
+                        <!-- Botão para upload da logo embaixo da imagem -->
+                        <label for="logoUpload" class="mt-2 cursor-pointer text-xs text-primary underline text-center">Alterar Logo</label>
+                        <input type="file" id="logoUpload" accept="image/*" class="hidden">
+                    </div>
+                    <h1 class="text-3xl font-extrabold text-primary ml-3">Registro de Frequência 🗓️</h1>
                 </div>
+                <!-- Fim LOGO E TÍTULO -->
                 <p id="userIdDisplay" class="text-xs text-gray-500 mt-1">Usuário: Carregando...</p>
             </header>
 
