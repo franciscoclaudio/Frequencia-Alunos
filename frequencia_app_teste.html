@@ -19,8 +19,9 @@
                         sans: ['Inter', 'sans-serif'],
                     },
                     colors: {
-                        'primary': '#4f46e5',
-                        'secondary': '#f97316',
+                        // Cores personalizadas baseadas nos exemplos do Tailwind (indigo e orange)
+                        'primary': '#4f46e5', // Indigo-600
+                        'secondary': '#f97316', // Orange-500
                     }
                 }
             }
@@ -30,101 +31,92 @@
 <body class="bg-gray-100 font-sans">
     
     <div class="container-app">
-        
-        <!-- Logo Principal da Aplicação -->
-        <!-- O src padrão é um placeholder. O script o atualiza ao selecionar a turma. -->
-        <img id="mainLogo" class="main-logo" src="https://placehold.co/120x120/4f46e5/ffffff?text=LOGO" alt="Logo da Turma/Escola">
-
         <!-- Card Principal da Aplicação -->
         <div class="w-full max-w-2xl bg-white p-6 md:p-8 rounded-xl shadow-2xl space-y-6">
             
             <header class="pb-4 border-b border-gray-200">
-                <h1 class="text-3xl font-extrabold text-primary">Registro de Frequência 🗓️</h1>
-                <p id="userIdDisplay" class="text-xs text-gray-500 italic">Carregando...</p>
+                <!-- LOGO E TÍTULO -->
+                <div class="flex items-center space-x-3 mb-2">
+                    <img src="1000377944.jpg" 
+                         alt="Logo do Aplicativo" 
+                         class="w-12 h-12 rounded-full shadow-md object-cover flex-shrink-0">
+                    <h1 class="text-3xl font-extrabold text-primary">Registro de Frequência 🗓️</h1>
+                </div>
+                <!-- Fim LOGO E TÍTULO -->
+                
+                <p id="userIdDisplay" class="text-xs text-gray-500 mt-1">Usuário: Carregando...</p>
             </header>
 
-            <!-- Conteúdo Principal e Ferramentas -->
-            <div id="loadingMessage" class="text-center text-lg font-medium text-gray-600">
-                Conectando ao Firebase...
+            <!-- Área de Loading (Visível até a autenticação) -->
+            <div id="loadingIndicator" class="text-center py-10">
+                <div class="animate-spin inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full" role="status">
+                    <span class="sr-only">Carregando...</span>
+                </div>
+                <p class="text-gray-600 mt-3">Conectando ao Firebase...</p>
             </div>
 
+            <!-- Conteúdo Principal (Escondido até a autenticação e carregamento inicial) -->
             <div id="appContent" class="hidden space-y-6">
-                
-                <!-- Ferramentas de Seleção -->
-                <div class="flex flex-wrap items-center gap-4">
+
+                <!-- Bloco de Seleção de Turma e Data -->
+                <div class="p-4 bg-primary/10 rounded-lg border border-primary/20 shadow-inner">
+                    <h2 class="text-xl font-semibold text-primary mb-3">Selecione a Turma e Data</h2>
                     
-                    <!-- Seleção de Turma -->
-                    <div class="flex-grow">
-                        <label for="classSelect" class="block text-sm font-medium text-gray-700 mb-1">Turma:</label>
-                        <select id="classSelect" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50" disabled>
-                            <option value="" disabled selected>Carregando Turmas...</option>
+                    <!-- Dropdown de Turmas -->
+                    <div class="mb-4">
+                        <label for="classesSelect" class="block text-sm font-medium text-gray-700 mb-1">Turma:</label>
+                        <select id="classesSelect" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-secondary focus:border-secondary transition duration-150">
+                            <option value="" disabled selected>-- Selecione uma Turma --</option>
                         </select>
                     </div>
 
-                    <!-- Botão de Editar Turma -->
-                    <button id="editClassBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 whitespace-nowrap" style="min-width: 100px;" disabled>
-                        Editar Turma Base
-                    </button>
-                    
-                    <!-- Botão de Adicionar Turma -->
-                    <button id="addClassBtn" class="bg-primary hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 whitespace-nowrap" style="min-width: 100px;">
-                        + Nova Turma Base
-                    </button>
-                </div>
-                
-                <!-- Seleção de Data -->
-                <div class="flex items-center gap-4">
-                    <div class="flex-grow">
-                        <label for="dateInput" class="block text-sm font-medium text-gray-700 mb-1">Data:</label>
-                        <input type="date" id="dateInput" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                    <!-- Input de Data -->
+                    <div>
+                        <label for="dateInput" class="block text-sm font-medium text-gray-700 mb-1">Data da Aula:</label>
+                        <input type="date" id="dateInput" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-secondary focus:border-secondary transition duration-150">
                     </div>
-                    <button id="loadRosterBtn" class="bg-secondary hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 mt-5" disabled>
-                        Carregar Lista
+
+                    <!-- Botão para Adicionar/Editar Turma -->
+                    <button id="openAddClassModalBtn" class="mt-4 w-full bg-primary hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-150">
+                        Adicionar/Editar Turma Base
                     </button>
                 </div>
 
-                <div id="statusMessage" class="text-sm text-center text-red-600 font-medium hidden"></div>
+                <!-- Lista de Alunos e Frequência -->
+                <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="currentClassTitle" class="text-2xl font-bold text-gray-800">Selecione uma turma acima</h2>
+                        <span id="dateDisplay" class="text-sm text-gray-500"></span>
+                    </div>
 
-                <!-- Lista de Chamada -->
-                <div id="rosterContainer" class="hidden">
-                    <h2 class="text-xl font-bold text-gray-800 mb-3">Lista de Chamada</h2>
-                    <div id="rosterList" class="scrollable-content border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
+                    <div id="studentsListContainer" class="scrollable-content divide-y divide-gray-100 border border-gray-200 rounded-lg p-2">
                         <!-- Alunos serão injetados aqui -->
+                        <p class="text-center text-gray-500 py-4">Nenhum aluno carregado.</p>
                     </div>
+                    
+                    <button id="saveAttendanceBtn" class="mt-6 w-full bg-secondary hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg shadow-xl transition-colors duration-150 disabled:opacity-50" disabled>
+                        Salvar Frequência
+                    </button>
+                </div>
 
-                    <div class="mt-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-                        <button id="exportDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 w-full sm:w-auto">
-                            Exportar Dados (CSV)
-                        </button>
-                        <button id="saveAttendanceBtn" class="bg-primary hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-xl shadow-lg transition-colors duration-150 w-full sm:w-auto font-extrabold" disabled>
-                            Salvar Frequência
-                        </button>
-                    </div>
+            </div>
+            <!-- Fim Conteúdo Principal -->
+
+
+            <!-- Mensagem de Confirmação/Erro (Toast) -->
+            <div id="messageToast" class="fixed bottom-4 right-4 max-w-sm w-full bg-green-500 text-white p-4 rounded-lg shadow-xl hidden transition-opacity duration-300 opacity-0 z-50" role="alert">
+                <div class="flex justify-between items-start">
+                    <p id="messageText" class="font-semibold text-sm mr-4">Mensagem</p>
+                    <button id="closeMessageBtn" class="text-white hover:text-gray-200 ml-4 font-bold transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
             </div>
 
-            <!-- Toast/Modal de Mensagens -->
-            <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-                <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full space-y-4">
-                    <h3 id="messageTitle" class="text-xl font-bold text-primary">Mensagem</h3>
-                    <p id="messageText" class="text-gray-700"></p>
-                    <button id="closeMessageBtn" class="bg-primary hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg float-right">Fechar</button>
-                </div>
-            </div>
-
-            <!-- Modal para Adicionar Turma -->
+            <!-- Modal para Adicionar/Editar Turma -->
             <div id="addClassModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
                 <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full space-y-4">
                     <h3 id="modalTitle" class="text-2xl font-bold text-primary mb-4">Adicionar Nova Turma Base</h3>
-                    
-                    <!-- Bloco de Upload de Logo ADICIONADO AQUI -->
-                    <div class="border p-4 rounded-lg space-y-3">
-                        <h4 class="text-lg font-semibold text-gray-800">Logo da Turma/Escola (Opcional)</h4>
-                        <input type="file" id="logoUploadInput" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
-                        <img id="logoPreview" class="w-20 h-20 object-contain rounded-lg border-2 border-dashed border-gray-300 hidden" alt="Preview da Logo">
-                        <p id="currentLogoMessage" class="text-sm text-gray-500"></p>
-                    </div>
-
                     <input type="text" id="classNameInput" placeholder="Nome da Turma (Ex: 3º B - Matutino)" class="w-full p-3 border border-gray-300 rounded-lg">
                     <textarea id="studentListInput" placeholder="Lista de Alunos (Um nome por linha)" rows="5" class="w-full p-3 border border-gray-300 rounded-lg"></textarea>
                     
@@ -143,8 +135,7 @@
         </div>
     </div>
     
-    <!-- Link para o arquivo de script principal -->
+    <!-- Link para o arquivo de script JavaScript (type="module" para importações do Firebase) -->
     <script type="module" src="frequencia_app_teste_script.js"></script>
-
 </body>
 </html>
