@@ -15,6 +15,7 @@
                     },
                     colors: {
                         'primary': '#4f46e5',
+                        // COR SECUNDÁRIA ALTERADA DE LARANJA PARA VERDE
                         'secondary': '#10b981', 
                     }
                 }
@@ -34,8 +35,7 @@
                         <label for="logoUpload" class="text-xs text-center text-primary underline mt-1">Trocar Logo</label>
                         <input type="file" id="logoUpload" accept="image/*" class="hidden">
                     </div>
-                    <div class="flex-grow">
-                        <h1 class="text-xl font-bold text-blue">Controle de Frequência</h1>
+                    <div class="flex-grow text-center"> <h1 class="text-2xl font-bold text-gray-800">Controle de Frequência</h1>
                         <p id="userIdDisplay" class="text-sm text-gray-500 mt-1">Carregando usuário...</p>
                     </div>
                 </div>
@@ -47,8 +47,7 @@
 
             <div id="appContent" class="hidden space-y-6">
                 <div class="p-4 bg-primary/10 rounded-lg border border-primary/20 shadow-inner">
-                    <h2 class="text-xl font-semibold text-primary mb-3">Selecione a Turma e Data</h2>
-                    <div class="mb-4">
+                    <h2 class="text-xl font-semibold text-primary mb-3 text-center">Selecione a Turma e Data</h2> <div class="mb-4">
                         <label for="classesSelect" class="block text-sm font-medium text-gray-700 mb-1">Turma:</label>
                         <select id="classesSelect" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-secondary focus:border-secondary transition duration-150">
                             <option value="" disabled selected>-- Selecione uma Turma --</option>
@@ -60,10 +59,10 @@
                     </div>
                     <div class="mt-4 space-y-2">
                         <button id="openAddClassBtn" class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-150">
-                            Adicionar Nova Turma
+                            Adicionar Nova Turma Base
                         </button>
                         <button id="openEditClassBtn" class="w-full bg-secondary hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-150 hidden">
-                            Editar Turma Selecionada
+                            Editar Turma Base Selecionada
                         </button>
                         <button id="deleteClassQuickBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-150 hidden">
                             Excluir Turma Selecionada
@@ -73,11 +72,10 @@
 
                 <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
                     <div class="flex justify-between items-center mb-4 border-b pb-2">
-                        <div>
-                            <h3 id="currentClassTitle" class="text-xl font-bold text-gray-800">Selecione uma turma acima</h3>
+                        <div class="flex-grow text-center"> <h3 id="currentClassTitle" class="text-xl font-bold text-gray-800">Selecione uma turma acima</h3>
                             <p id="dateDisplay" class="text-sm text-gray-500"></p>
                         </div>
-                        <div class="flex space-x-2">
+                        <div class="flex space-x-2 flex-shrink-0">
                             <button id="exportCSVBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 text-sm disabled:opacity-50" disabled>
                                 Exportar CSV
                             </button>
