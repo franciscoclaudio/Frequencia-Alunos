@@ -30,6 +30,11 @@
 <body class="bg-gray-100 font-sans">
     
     <div class="container-app">
+        
+        <!-- Logo Principal da Aplicação -->
+        <!-- O src padrão é um placeholder. O script o atualiza ao selecionar a turma. -->
+        <img id="mainLogo" class="main-logo" src="https://placehold.co/120x120/4f46e5/ffffff?text=LOGO" alt="Logo da Turma/Escola">
+
         <!-- Card Principal da Aplicação -->
         <div class="w-full max-w-2xl bg-white p-6 md:p-8 rounded-xl shadow-2xl space-y-6">
             
@@ -111,8 +116,18 @@
             <div id="addClassModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
                 <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full space-y-4">
                     <h3 id="modalTitle" class="text-2xl font-bold text-primary mb-4">Adicionar Nova Turma Base</h3>
+                    
+                    <!-- Bloco de Upload de Logo ADICIONADO AQUI -->
+                    <div class="border p-4 rounded-lg space-y-3">
+                        <h4 class="text-lg font-semibold text-gray-800">Logo da Turma/Escola (Opcional)</h4>
+                        <input type="file" id="logoUploadInput" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+                        <img id="logoPreview" class="w-20 h-20 object-contain rounded-lg border-2 border-dashed border-gray-300 hidden" alt="Preview da Logo">
+                        <p id="currentLogoMessage" class="text-sm text-gray-500"></p>
+                    </div>
+
                     <input type="text" id="classNameInput" placeholder="Nome da Turma (Ex: 3º B - Matutino)" class="w-full p-3 border border-gray-300 rounded-lg">
                     <textarea id="studentListInput" placeholder="Lista de Alunos (Um nome por linha)" rows="5" class="w-full p-3 border border-gray-300 rounded-lg"></textarea>
+                    
                     <div class="flex flex-col sm:flex-row justify-between gap-3 mt-4">
                         <button id="deleteClassBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 whitespace-nowrap hidden">
                             Excluir Turma
