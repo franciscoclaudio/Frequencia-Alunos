@@ -15,9 +15,6 @@ const firebaseConfig = {
     appId: "1:571143130821:web:812eb820306f6b0338eaac"
 };
 
-// ID único para esta instância (usado para separar dados de diferentes usuários)
-const APP_ID = 'frequencia-app-v1';
-
 // --- VARIÁVEIS GLOBAIS FIREBASE E ESTADO DA APLICAÇÃO ---
 let app;
 let db;
@@ -32,6 +29,8 @@ let currentFrequencyDocId = null;
 const loadingEl = document.getElementById('loadingIndicator');
 const appContentEl = document.getElementById('appContent');
 const userIdDisplayEl = document.getElementById('userIdDisplay');
+const logoImg = document.getElementById('logoImg');
+const logoUploadInput = document.getElementById('logoUpload');
 const classesSelectEl = document.getElementById('classesSelect');
 const studentsListContainerEl = document.getElementById('studentsListContainer');
 const dateInputEl = document.getElementById('dateInput');
@@ -45,6 +44,7 @@ const addClassModal = document.getElementById('addClassModal');
 const modalTitleEl = document.getElementById('modalTitle');
 const classNameInputEl = document.getElementById('classNameInput');
 const studentListInputEl = document.getElementById('studentListInput');
+const studentListFileEl = document.getElementById('studentListFile');
 const cancelAddClassBtn = document.getElementById('cancelAddClassBtn');
 const saveClassBtn = document.getElementById('saveClassBtn');
 const deleteClassBtn = document.getElementById('deleteClassBtn');
@@ -58,7 +58,6 @@ const openAddClassModalBtn = document.getElementById('openAddClassModalBtn');
 function showMessage(message, type = 'success') {
     messageTextEl.textContent = message;
     
-    // Remove classes anteriores e aplica nova cor
     messageToast.classList.remove('bg-green-500', 'bg-red-500', 'bg-blue-500');
     if (type === 'error') {
         messageToast.classList.add('bg-red-500');
@@ -73,7 +72,6 @@ function showMessage(message, type = 'success') {
     messageToast.classList.remove('opacity-0');
     messageToast.classList.add('opacity-100');
     
-    // Auto-esconde após 4 segundos
     setTimeout(() => {
         closeMessage();
     }, 4000);
@@ -88,6 +86,41 @@ function closeMessage() {
         messageToast.classList.add('hidden');
         messageToast.classList.remove('flex');
     }, 300);
+}
+
+/**
+ * Manipula o upload e preview da logo.
+ */
+function handleLogoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        logoImg.src = e.target.result;
+        // Salva no localStorage para persistir
+        try {
+            localStorage.setItem('customLogo', e.target.result);
+            showMessage('Logo atualizada!', 'info');
+        } catch (err) {
+            console.warn('Não foi possível salvar logo:', err);
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+/**
+ * Carrega logo salva do localStorage.
+ */
+function loadSavedLogo() {
+    try {
+        const savedLogo = localStorage.getItem('customLogo');
+        if (savedLogo) {
+            logoImg.src = savedLogo;
+        }
+    } catch (err) {
+        console.warn('Não foi possível carregar logo salva:', err);
+    }
 }
 
 /**
@@ -107,6 +140,7 @@ function showClassModal(isEditing = false, classData = null) {
         deleteClassBtn.classList.add('hidden');
         currentClassId = null;
     }
+    studentListFileEl.value = ''; // Limpa o input de arquivo
     addClassModal.classList.remove('hidden');
     addClassModal.classList.add('flex');
 }
@@ -120,6 +154,35 @@ function hideClassModal() {
     currentClassId = null;
     classNameInputEl.value = '';
     studentListInputEl.value = '';
+    studentListFileEl.value = '';
+}
+
+/**
+ * Processa arquivo TXT com lista de alunos.
+ */
+function handleStudentListFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const fileContent = e.target.result;
+        const names = fileContent.split(/\r?\n/)
+            .map(name => name.trim())
+            .filter(name => name.length > 0);
+        
+        // Atualiza o textarea com os nomes
+        studentListInputEl.value = names.join('\n');
+        
+        // Se não houver nome de turma, sugere o nome do arquivo
+        if (!classNameInputEl.value.trim()) {
+            const fileName = file.name.replace(/\.txt$/i, '');
+            classNameInputEl.value = fileName;
+        }
+        
+        showMessage(`${names.length} alunos carregados do arquivo`, 'info');
+    };
+    reader.readAsText(file);
 }
 
 // --- FUNÇÕES DE FIREBASE / FIRESTORE ---
@@ -232,7 +295,6 @@ async function deleteClass() {
     if (!classesPath) return;
 
     try {
-        // Exclui registros de frequência
         const frequencyPath = getFrequencyCollectionPath(currentClassId);
         const q = query(collection(db, frequencyPath));
         const snapshot = await getDocs(q);
@@ -242,7 +304,6 @@ async function deleteClass() {
         );
         await Promise.all(deletePromises);
         
-        // Exclui a turma
         const classDocRef = doc(db, classesPath, currentClassId);
         await deleteDoc(classDocRef);
 
@@ -354,7 +415,7 @@ function updateClassSelects() {
     currentClasses.forEach(classData => {
         const option = document.createElement('option');
         option.value = classData.id;
-        option.textContent = classData.name;
+        option.textContent = `${classData.name} (${classData.students.length} alunos)`;
         classesSelectEl.appendChild(option);
     });
 
@@ -492,10 +553,12 @@ function handleDateChange(dateString) {
 // --- CONFIGURAÇÃO DE EVENTOS ---
 
 closeMessageBtn.addEventListener('click', closeMessage);
+logoUploadInput.addEventListener('change', handleLogoUpload);
 openAddClassModalBtn.addEventListener('click', () => showClassModal(false));
 cancelAddClassBtn.addEventListener('click', hideClassModal);
 saveClassBtn.addEventListener('click', saveClass);
 deleteClassBtn.addEventListener('click', deleteClass);
+studentListFileEl.addEventListener('change', handleStudentListFile);
 classesSelectEl.addEventListener('change', (e) => handleClassSelection(e.target.value));
 dateInputEl.addEventListener('change', (e) => handleDateChange(e.target.value));
 saveAttendanceBtn.addEventListener('click', registerFrequency);
@@ -507,13 +570,21 @@ dateInputEl.value = today;
 // --- INICIALIZAÇÃO DA APLICAÇÃO ---
 
 async function initializeAppAndAuth() {
+    console.log("🚀 Iniciando aplicação...");
+    
     try {
         app = initializeApp(firebaseConfig);
+        console.log("✅ Firebase inicializado");
+        
         db = getFirestore(app);
+        console.log("✅ Firestore conectado");
+        
         auth = getAuth(app);
+        console.log("✅ Auth configurado");
 
-        // Autenticação Anônima
+        console.log("🔐 Tentando autenticação anônima...");
         await signInAnonymously(auth);
+        console.log("✅ Autenticação anônima bem-sucedida!");
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -523,6 +594,9 @@ async function initializeAppAndAuth() {
                 loadingEl.classList.add('hidden');
                 appContentEl.classList.remove('hidden');
 
+                // Carrega logo salva
+                loadSavedLogo();
+
                 setupClassesListener();
             } else {
                 userIdDisplayEl.textContent = `Usuário: Desconectado`;
@@ -531,8 +605,8 @@ async function initializeAppAndAuth() {
         });
 
     } catch (error) {
-        console.error("Erro durante a inicialização:", error);
-        loadingEl.innerHTML = `<p class="text-red-600 text-center">Erro: ${error.message}</p>`;
+        console.error("❌ Erro durante a inicialização:", error);
+        loadingEl.innerHTML = `<p class="text-red-600 text-center font-medium">Erro: ${error.message}</p>`;
         showMessage('Erro ao conectar ao Firebase: ' + error.message, 'error');
     }
 }
