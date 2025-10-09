@@ -265,7 +265,13 @@ async function loadFrequencyForDate(classId, dateString) {
     currentFrequencyDocId = null;
     saveAttendanceBtn.textContent = 'Salvar Frequência';
     saveAttendanceBtn.disabled = false;
-    if (!classId || !dateString) return;
+    exportCSVBtn.disabled = false; // Habilita o botão CSV
+    
+    if (!classId || !dateString) {
+        exportCSVBtn.disabled = true; // Desabilita se faltar data ou turma
+        return;
+    }
+    
     const frequencyPath = getFrequencyCollectionPath(classId);
     if (!frequencyPath) return;
     const frequencyDocRef = doc(db, frequencyPath, dateString);
@@ -316,9 +322,10 @@ async function registerFrequency() {
 
         records[name] = {
             present: presenceCheckbox.checked,
-            pontualidade: pontualidade || "não observado",
-            harmonia: harmonia || "não observado",
-            participacao: participacao || "não observado"
+            // Usa os valores padronizados na leitura do DOM.
+            pontualidade: pontualidade,
+            harmonia: harmonia,
+            participacao: participacao
         };
     });
 
@@ -369,6 +376,7 @@ function clearStudentList() {
     currentClassTitleEl.textContent = 'Selecione uma turma acima';
     dateDisplayEl.textContent = '';
     saveAttendanceBtn.disabled = true;
+    exportCSVBtn.disabled = true; // Desabilita o botão CSV ao limpar a lista
 }
 
 /**
@@ -385,6 +393,7 @@ function renderStudentList(students, records) {
         const switchTranslate = isPresent ? 'translate-x-6' : 'translate-x-1';
 
         // Critérios opcionais: valor salvo ou vazio
+        // O valor padrão do select é "", que corresponde a "Não Observado"
         const pontualidadeValue = record.pontualidade && record.pontualidade !== "não observado" ? record.pontualidade : "";
         const harmoniaValue = record.harmonia && record.harmonia !== "não observado" ? record.harmonia : "";
         const participacaoValue = record.participacao && record.participacao !== "não observado" ? record.participacao : "";
@@ -407,7 +416,6 @@ function renderStudentList(students, records) {
                         </div>
                     </label>
                 </div>
-                <!-- Critérios opcionais -->
                 <div class="flex flex-col md:flex-row gap-2 mt-2">
                     <label class="text-xs text-gray-700 font-medium">
                         Pontualidade:
@@ -442,6 +450,7 @@ function renderStudentList(students, records) {
     currentClassTitleEl.textContent = currentClassData.name;
     dateDisplayEl.textContent = dateInputEl.value ? `Data: ${new Date(dateInputEl.value + 'T00:00:00').toLocaleDateString('pt-BR')}` : '';
     saveAttendanceBtn.disabled = false;
+    exportCSVBtn.disabled = false; // Garante que o botão CSV esteja ativo
 }
 
 window.handlePresenceChange = function(checkbox) {
@@ -490,17 +499,21 @@ function exportAttendanceToCSV() {
         const isPresent = presenceCheckbox.checked ? "SIM" : "NÃO";
         
         // Critérios
-        const pontualidade = item.querySelector('.pontualidade-select')?.value || "Não Observado";
-        const harmonia = item.querySelector('.harmonia-select')?.value || "Não Observado";
-        const participacao = item.querySelector('.participacao-select')?.value || "Não Observado";
+        // O valor padrão do select é "" (Não Observado), que tratamos como "Não Observado" no CSV
+        const pontualidade = item.querySelector('.pontualidade-select')?.value || "";
+        const harmonia = item.querySelector('.harmonia-select')?.value || "";
+        const participacao = item.querySelector('.participacao-select')?.value || "";
 
+        // Mapeia o valor "" para a string "Não Observado" para o CSV
+        const getDisplayValue = (value) => value === "" ? "Não Observado" : value.charAt(0).toUpperCase() + value.slice(1);
+        
         // Formato CSV com separador ';'
         const row = [
-            `"${name}"`, // Envolve o nome em aspas para evitar problemas com vírgulas/pontos
+            `"${name}"`, // Envolve o nome em aspas para evitar problemas
             isPresent,
-            pontualidade,
-            harmonia,
-            participacao
+            getDisplayValue(pontualidade),
+            getDisplayValue(harmonia),
+            getDisplayValue(participacao)
         ].join(';');
         
         csvContent += row + "\n";
@@ -508,7 +521,8 @@ function exportAttendanceToCSV() {
 
     // 3. Criação e Download do arquivo
     const filename = `${className}_Frequencia_${dateString}.csv`;
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Adiciona o charset utf-8 com BOM (Byte Order Mark) para garantir caracteres especiais (acentos) corretos no Excel
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     
     if (link.download !== undefined) { // Browser support
@@ -525,9 +539,6 @@ function exportAttendanceToCSV() {
     }
 }
 
-
-// --- FLUXO ---
-// ... (restante do código)
 
 // --- FLUXO ---
 
@@ -571,11 +582,12 @@ function handleDateChange(dateString) {
         renderStudentList(currentClassData.students, {});
     }
 }
+
 function handleDeleteClassQuick() {
     if (currentClassId && currentClassData) {
-        // Usa o mesmo modal, mas com o contexto da turma já selecionada
+        // Abre o modal em modo de edição, forçando a exibição do botão de exclusão
         showClassModal(true, currentClassData);
-        // O modal já tem a lógica de exclusão (deleteClassBtn)
+        // A exclusão real é feita pela função deleteClass() acionada pelo deleteClassBtn dentro do modal.
     } else {
         showMessage("Selecione uma turma para excluir.", 'error');
     }
@@ -593,6 +605,10 @@ studentListFileEl.addEventListener('change', handleStudentListFile);
 classesSelectEl.addEventListener('change', (e) => handleClassSelection(e.target.value));
 dateInputEl.addEventListener('change', (e) => handleDateChange(e.target.value));
 saveAttendanceBtn.addEventListener('click', registerFrequency);
+
+// LISTENERS ADICIONAIS:
+deleteClassQuickBtn.addEventListener('click', handleDeleteClassQuick);
+exportCSVBtn.addEventListener('click', exportAttendanceToCSV);
 
 // Data padrão (hoje)
 const today = new Date().toISOString().split('T')[0];
@@ -614,6 +630,10 @@ async function initializeAppAndAuth() {
                 appContentEl.classList.remove('hidden');
                 loadSavedLogo();
                 setupClassesListener();
+                // Carrega a frequência do dia atual por padrão após a inicialização
+                if (classesSelectEl.value) {
+                    loadFrequencyForDate(classesSelectEl.value, dateInputEl.value);
+                }
             } else {
                 userIdDisplayEl.textContent = `Usuário: Desconectado`;
                 showMessage('Erro de autenticação. Recarregue a página.', 'error');
