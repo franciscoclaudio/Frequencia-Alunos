@@ -4,42 +4,42 @@ import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged }
 import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, getDoc, getDocs, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 
+// Importações do Firebase Storage ADICIONADAS AQUI
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
 // Ativa o log de debug para o Firestore
 setLogLevel('Debug');
 
-// Configurações Globais (Estas variáveis são injetadas pelo ambiente Canvas)
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+// Configurações Globais (Mantenha as variáveis injetadas se for usar o Canvas novamente, ou defina-as)
+const appId = 'default-app-id'; // Defina um ID padrão se não estiver no Canvas
+const initialAuthToken = null;
 
 // --- CONFIGURAÇÃO FIREBASE ---
-let firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-
-if (Object.keys(firebaseConfig).length === 0) {
-    // Configuração de Fallback (MANTIDA PARA GARANTIR A EXECUÇÃO EM AMBIENTES FORA DO CANVAS)
+let firebaseConfig = {
     // ESTA CHAVE DEVE SER SUBSTITUÍDA PELA SUA PRÓPRIA CHAVE DO FIREBASE
-    firebaseConfig = {
-        apiKey: "AIzaSyDo6uA_fJGbKqLfj9kwUu1JSkC34HGlWk0",
-        authDomain: "registrar-frenquencia.firebaseapp.com",
-        projectId: "registrar-frenquencia",
-        storageBucket: "registrar-frenquencia.firebasestorage.app",
-        messagingSenderId: "571143130821",
-        appId: "1:571143130821:web:812eb820306f6b0338eaac"
-    };
-}
+    apiKey: "SUA_API_KEY_AQUI", // Exemplo: "AIzaSyDo6uA_fJGbKqLfj9kwUu1JSkC34HGlWk0"
+    authDomain: "SEU_PROJETO.firebaseapp.com",
+    projectId: "SEU_PROJETO",
+    storageBucket: "SEU_PROJETO.appspot.com", // IMPORTANTE: O storageBucket deve ser configurado
+    messagingSenderId: "SEU_SENDER_ID",
+    appId: "SEU_APP_ID_WEB"
+};
 
 
 // Variáveis de Estado do Aplicativo
 let app;
 let db;
 let auth;
+let storage; // Instância do Storage
 let userId = null;
 let currentClasses = [];
 let currentClassId = null;
 let currentRoster = [];
 let currentAttendanceRecord = {}; // { studentName: boolean }
+let currentLogoFile = null; // Para armazenar o arquivo de imagem selecionado
 
 
-// Referências ao DOM
+// Referências ao DOM (Algumas foram movidas ou renomeadas)
 const classSelectEl = document.getElementById('classSelect');
 const loadRosterBtn = document.getElementById('loadRosterBtn');
 const saveAttendanceBtn = document.getElementById('saveAttendanceBtn');
@@ -65,13 +65,17 @@ const statusMessageEl = document.getElementById('statusMessage');
 const exportDataBtn = document.getElementById('exportDataBtn');
 const modalTitleEl = document.getElementById('modalTitle');
 
+// Referências DOM para Logo ADICIONADAS AQUI
+const mainLogoEl = document.getElementById('mainLogo');
+const logoUploadInput = document.getElementById('logoUploadInput');
+const logoPreviewEl = document.getElementById('logoPreview');
+const currentLogoMessageEl = document.getElementById('currentLogoMessage');
+
 
 // --- FUNÇÕES DE UTILIDADE ---
 
 /**
  * Exibe uma mensagem de toast/modal personalizada.
- * @param {string} title - Título da mensagem.
- * @param {string} text - Conteúdo da mensagem.
  */
 function showMessage(title, text) {
     messageTitleEl.textContent = title;
@@ -87,6 +91,48 @@ function closeMessage() {
     messageModal.classList.add('hidden');
     messageModal.classList.remove('flex');
 }
+
+/**
+ * Define o logo principal na interface.
+ */
+function setMainLogo(url) {
+    if (url) {
+        mainLogoEl.src = url;
+    } else {
+        // Logo padrão (placeholder)
+        mainLogoEl.src = "https://placehold.co/120x120/4f46e5/ffffff?text=LOGO";
+    }
+}
+
+/**
+ * Pré-visualiza a imagem no modal. (Lógica de preview de frequencia_alunos.html)
+ */
+function previewLogo(event) {
+    const file = event.target.files[0];
+    currentLogoFile = file; // Salva o arquivo no estado global
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            logoPreviewEl.src = e.target.result;
+            logoPreviewEl.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+        currentLogoMessageEl.textContent = `Novo arquivo: ${file.name}`;
+    } else {
+        // Se o usuário cancelou a seleção, tenta manter o logo atual na preview, se for edição
+        if (saveClassBtn.dataset.classId) {
+             // A lógica de preview em edição é tratada em openClassModal, aqui apenas limpamos o arquivo
+             currentLogoFile = null;
+             currentLogoMessageEl.textContent = "Logo atual mantida. Selecione um novo arquivo para substituir.";
+        } else {
+            logoPreviewEl.src = '';
+            logoPreviewEl.classList.add('hidden');
+            currentLogoMessageEl.textContent = 'Selecione uma logo (opcional) para a nova turma.';
+        }
+    }
+}
+
 
 /**
  * Obtém o caminho base da coleção de turmas do Firestore para o usuário.
@@ -106,9 +152,6 @@ function getAttendanceCollectionRef() {
 
 /**
  * Formata a data para a chave do documento do Firestore.
- * @param {string} classId - ID da turma.
- * @param {string} date - Data no formato AAAA-MM-DD.
- * @returns {string} - Chave formatada (ex: TurmaA_2025-10-09).
  */
 function getAttendanceDocId(classId, date) {
     return `${classId}_${date}`;
@@ -127,12 +170,12 @@ function setDefaultDate() {
 
 /**
  * Renderiza a lista de turmas no <select>.
- * @param {Array<Object>} classes - Array de objetos de turma.
  */
 function renderClassesSelect(classes) {
     classSelectEl.innerHTML = ''; // Limpa as opções existentes
     classSelectEl.disabled = false;
     editClassBtn.disabled = true;
+    setMainLogo(null); // Reseta o logo principal ao recarregar a lista
 
     if (classes.length === 0) {
         classSelectEl.innerHTML = '<option value="" disabled selected>Nenhuma Turma Encontrada</option>';
@@ -148,12 +191,29 @@ function renderClassesSelect(classes) {
         option.textContent = cls.name;
         classSelectEl.appendChild(option);
     });
+
+    // Se uma turma estava selecionada, tenta re-selecioná-la
+    if (currentClassId) {
+        const selectedClass = classes.find(c => c.id === currentClassId);
+        if (selectedClass) {
+            classSelectEl.value = currentClassId;
+            editClassBtn.disabled = false;
+            loadRosterBtn.disabled = false;
+            // Carrega o logo da turma selecionada
+            if (selectedClass.logoUrl) {
+                setMainLogo(selectedClass.logoUrl);
+            }
+        } else {
+            // Se a turma foi deletada, reseta a seleção
+            currentClassId = null;
+            classSelectEl.value = "";
+            rosterContainerEl.classList.add('hidden');
+        }
+    }
 }
 
 /**
  * Renderiza a lista de alunos para a chamada.
- * @param {Array<string>} roster - Array de nomes de alunos.
- * @param {Object} attendance - Objeto de frequência {nomeAluno: true/false}.
  */
 function renderRoster(roster, attendance = {}) {
     rosterListEl.innerHTML = '';
@@ -178,7 +238,7 @@ function renderRoster(roster, attendance = {}) {
             <!-- Switch de Presença Customizado -->
             <label class="inline-flex items-center cursor-pointer">
                 <input type="checkbox" id="presence-${studentId}" data-student-name="${studentName}" class="sr-only presence-checkbox" ${isPresent ? 'checked' : ''}>
-                <div class="w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 transition-colors duration-300"></div>
+                <div class="relative w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 transition-colors duration-300"></div>
                 <span class="ml-3 text-sm font-medium text-gray-900">
                     ${isPresent ? 'Presente' : 'Faltou'}
                 </span>
@@ -198,6 +258,27 @@ function renderRoster(roster, attendance = {}) {
 // --- FUNÇÕES DE MANIPULAÇÃO DO FIREBASE ---
 
 /**
+ * Faz o upload da imagem para o Firebase Storage e retorna a URL pública.
+ * (Lógica de upload de imagem)
+ */
+async function uploadLogoToStorage(file, classId) {
+    if (!storage || !userId) {
+        throw new Error("Storage ou Usuário não inicializado.");
+    }
+    
+    // Caminho no Storage: images/{userId}/{classId}_logo
+    const storageRef = ref(storage, `images/${userId}/${classId}_logo`);
+
+    // Faz o upload do arquivo
+    const snapshot = await uploadBytes(storageRef, file);
+    
+    // Obtém a URL pública
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
+}
+
+
+/**
  * Listener que carrega todas as turmas do Firestore em tempo real.
  */
 function setupClassesListener() {
@@ -208,17 +289,6 @@ function setupClassesListener() {
         currentClasses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderClassesSelect(currentClasses);
 
-        // Se uma turma estava selecionada, tenta re-selecioná-la
-        if (currentClassId) {
-            classSelectEl.value = currentClassId;
-            // Se a turma foi deletada, reseta a seleção
-            if (!currentClasses.find(c => c.id === currentClassId)) {
-                currentClassId = null;
-                classSelectEl.value = "";
-                rosterContainerEl.classList.add('hidden');
-                editClassBtn.disabled = true;
-            }
-        }
     }, (error) => {
         console.error("Erro ao carregar turmas:", error);
         showMessage("Erro de Conexão", "Não foi possível carregar as turmas. Verifique sua conexão e regras do Firebase.");
@@ -227,9 +297,6 @@ function setupClassesListener() {
 
 /**
  * Salva ou atualiza a definição de uma turma no Firestore.
- * @param {string} className - Nome da turma.
- * @param {Array<string>} studentRoster - Lista de alunos.
- * @param {string | null} docId - ID do documento para atualização (ou null para novo).
  */
 async function saveClassBase(className, studentRoster, docId = null) {
     const classesRef = getClassesCollectionRef();
@@ -237,29 +304,62 @@ async function saveClassBase(className, studentRoster, docId = null) {
         showMessage("Erro", "Usuário não autenticado.");
         return;
     }
-
-    const classData = {
-        name: className,
-        roster: studentRoster,
-        createdAt: new Date().toISOString()
-    };
+    
+    // Desabilita o botão para evitar cliques duplos durante o upload
+    saveClassBtn.disabled = true;
 
     try {
+        let classDocRef;
+        let finalClassId;
+        let logoUrl = null;
+
         if (docId) {
-            // Atualizar Turma Existente
-            const classDocRef = doc(classesRef, docId);
-            await setDoc(classDocRef, classData);
-            showMessage("Sucesso", `Turma '${className}' atualizada com sucesso.`);
+            // MODO EDIÇÃO
+            classDocRef = doc(classesRef, docId);
+            finalClassId = docId;
+            const currentData = currentClasses.find(c => c.id === docId);
+            if (currentData) logoUrl = currentData.logoUrl; // Mantém a URL existente se não houver novo upload
         } else {
-            // Adicionar Nova Turma
-            await addDoc(classesRef, classData);
-            showMessage("Sucesso", `Nova turma '${className}' adicionada com sucesso.`);
+            // MODO NOVO: Cria um ID antes de salvar para usar no Storage
+            classDocRef = doc(classesRef); 
+            finalClassId = classDocRef.id;
         }
+
+        // 1. Upload da Logo, se houver um novo arquivo
+        if (currentLogoFile) {
+            showMessage("Aguarde", "Carregando a nova logo para o servidor...");
+            logoUrl = await uploadLogoToStorage(currentLogoFile, finalClassId);
+        }
+        
+        // 2. Preparação dos Dados da Turma
+        const classData = {
+            name: className,
+            roster: studentRoster,
+            logoUrl: logoUrl, // Adiciona a URL do logo
+            updatedAt: new Date().toISOString()
+        };
+        
+        if (!docId) {
+             classData.createdAt = new Date().toISOString();
+        }
+
+        // 3. Salva ou Atualiza o Documento no Firestore
+        await setDoc(classDocRef, classData, { merge: true });
+
+        const successMessage = docId ? 
+            `Turma '${className}' atualizada com sucesso.` : 
+            `Nova turma '${className}' adicionada com sucesso.`;
+
+        showMessage("Sucesso", successMessage);
+
     } catch (error) {
         console.error("Erro ao salvar turma:", error);
-        showMessage("Erro ao Salvar", `Não foi possível salvar a turma. Detalhes: ${error.message}`);
+        showMessage("Erro ao Salvar", `Não foi possível salvar a turma. Detalhes: ${error.message}. Verifique se o Firebase Storage está ativado e as regras de segurança permitem uploads.`);
     } finally {
+        // Reseta o estado do modal e habilita o botão
+        saveClassBtn.disabled = false;
         addClassModal.classList.add('hidden');
+        currentLogoFile = null; // Limpa o arquivo de logo após o uso
     }
 }
 
@@ -280,6 +380,9 @@ async function loadRosterAndAttendance() {
 
     const selectedClass = currentClasses.find(c => c.id === currentClassId);
     if (!selectedClass) return;
+    
+    // Atualiza o logo principal ao carregar a lista
+    setMainLogo(selectedClass.logoUrl);
 
     // 1. Define a lista de alunos atual
     currentRoster = selectedClass.roster || [];
@@ -393,9 +496,7 @@ async function deleteClassBase(classId, className) {
         const classDocRef = doc(getClassesCollectionRef(), classId);
         await deleteDoc(classDocRef);
 
-        // 2. (OPCIONAL) O código não deleta os registros de frequência associados aqui,
-        // pois deletar subcoleções é complexo e lento. Apenas a base é removida.
-        // Os registros antigos ficarão "pendurados" (mas inacessíveis pelo app, exceto via exportação).
+        // 2. (OPCIONAL) O código não deleta os registros de frequência associados aqui.
 
         showMessage("Sucesso", `Turma "${className}" excluída com sucesso!`);
         addClassModal.classList.add('hidden');
@@ -467,9 +568,14 @@ async function exportData() {
 
 /**
  * Abre o modal para adicionar/editar turma.
- * @param {boolean} isEdit - True se for modo de edição.
  */
 function openClassModal(isEdit = false) {
+    // Reseta o estado do logo e do arquivo
+    logoUploadInput.value = '';
+    logoPreviewEl.src = '';
+    logoPreviewEl.classList.add('hidden');
+    currentLogoFile = null;
+
     if (isEdit) {
         const selectedClass = currentClasses.find(c => c.id === classSelectEl.value);
         if (!selectedClass) return;
@@ -479,6 +585,15 @@ function openClassModal(isEdit = false) {
         studentListInputEl.value = selectedClass.roster.join('\n');
         saveClassBtn.dataset.classId = selectedClass.id;
         deleteClassBtn.classList.remove('hidden');
+        
+        // Exibe o logo atual, se existir
+        if (selectedClass.logoUrl) {
+            logoPreviewEl.src = selectedClass.logoUrl;
+            logoPreviewEl.classList.remove('hidden');
+            currentLogoMessageEl.textContent = "Logo atual carregada. Selecione um novo arquivo para substituir.";
+        } else {
+            currentLogoMessageEl.textContent = "Nenhuma logo atual. Selecione um arquivo para adicionar.";
+        }
 
     } else {
         modalTitleEl.textContent = "Adicionar Nova Turma Base";
@@ -486,6 +601,7 @@ function openClassModal(isEdit = false) {
         studentListInputEl.value = '';
         saveClassBtn.dataset.classId = '';
         deleteClassBtn.classList.add('hidden');
+        currentLogoMessageEl.textContent = "Selecione uma logo (opcional) para a nova turma.";
     }
 
     addClassModal.classList.remove('hidden');
@@ -505,7 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
     saveAttendanceBtn.addEventListener('click', saveAttendance);
     exportDataBtn.addEventListener('click', exportData);
 
-    // Eventos do Modal
+    // Eventos do Modal de Adicionar/Editar Turma
     cancelAddClassBtn.addEventListener('click', () => {
         addClassModal.classList.add('hidden');
     });
@@ -529,6 +645,9 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteClassBase(classId, className);
         }
     });
+    
+    // Evento de Upload de Logo ADICIONADO AQUI
+    logoUploadInput.addEventListener('change', previewLogo);
 
 
     // Eventos de Seleção
@@ -536,6 +655,11 @@ document.addEventListener('DOMContentLoaded', () => {
         currentClassId = classSelectEl.value;
         editClassBtn.disabled = !currentClassId;
         loadRosterBtn.disabled = !currentClassId;
+        
+        // Define o logo ao mudar a turma
+        const selectedClass = currentClasses.find(c => c.id === currentClassId);
+        setMainLogo(selectedClass ? selectedClass.logoUrl : null);
+
         // Limpa e esconde a lista ao trocar de turma
         rosterContainerEl.classList.add('hidden');
         rosterListEl.innerHTML = '';
@@ -561,14 +685,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initializeAppAndAuth() {
     try {
-        if (Object.keys(firebaseConfig).length === 0) {
-             // Esta verificação agora é redundante, mas mantida para segurança
-             throw new Error("Configuração do Firebase não encontrada.");
+        if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "SUA_API_KEY_AQUI") {
+            throw new Error("Por favor, configure sua chave de API do Firebase.");
         }
 
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
+        storage = getStorage(app); // Inicializa o Firebase Storage
 
         // Autenticação (usa token personalizado ou anônima)
         if (initialAuthToken) {
@@ -600,5 +724,3 @@ async function initializeAppAndAuth() {
         loadingEl.innerHTML = `<span class=\"text-red-600\">Erro de Inicialização: ${error.message}.</span>`;
     }
 }
-
-initializeAppAndAuth();
