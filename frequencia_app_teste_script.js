@@ -49,6 +49,8 @@ const cancelAddClassBtn = document.getElementById('cancelAddClassBtn');
 const saveClassBtn = document.getElementById('saveClassBtn');
 const deleteClassBtn = document.getElementById('deleteClassBtn');
 const openAddClassModalBtn = document.getElementById('openAddClassModalBtn');
+const deleteClassQuickBtn = document.getElementById('deleteClassQuickBtn');
+const exportCSVBtn = document.getElementById('exportCSVBtn');
 
 // --- UTILIDADES ---
 
@@ -468,19 +470,88 @@ window.handlePresenceChange = function(checkbox) {
     }
 }
 
+function exportAttendanceToCSV() {
+    if (!currentClassId || !dateInputEl.value) {
+        showMessage("Nenhuma frequência carregada para exportar.", 'error');
+        return;
+    }
+
+    const dateString = dateInputEl.value;
+    const className = currentClassData.name;
+    const studentItems = studentsListContainerEl.querySelectorAll('.student-item');
+
+    // 1. Cabeçalho do CSV
+    let csvContent = "Nome;Presente;Pontualidade;Harmonia;Participação\n";
+
+    // 2. Linhas de dados
+    studentItems.forEach(item => {
+        const name = item.dataset.studentName;
+        const presenceCheckbox = item.querySelector('.presence-checkbox');
+        const isPresent = presenceCheckbox.checked ? "SIM" : "NÃO";
+        
+        // Critérios
+        const pontualidade = item.querySelector('.pontualidade-select')?.value || "Não Observado";
+        const harmonia = item.querySelector('.harmonia-select')?.value || "Não Observado";
+        const participacao = item.querySelector('.participacao-select')?.value || "Não Observado";
+
+        // Formato CSV com separador ';'
+        const row = [
+            `"${name}"`, // Envolve o nome em aspas para evitar problemas com vírgulas/pontos
+            isPresent,
+            pontualidade,
+            harmonia,
+            participacao
+        ].join(';');
+        
+        csvContent += row + "\n";
+    });
+
+    // 3. Criação e Download do arquivo
+    const filename = `${className}_Frequencia_${dateString}.csv`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) { // Browser support
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showMessage(`Exportação para CSV de "${className}" concluída!`);
+    } else {
+        showMessage("Seu navegador não suporta download de arquivos.", 'error');
+    }
+}
+
+
+// --- FLUXO ---
+// ... (restante do código)
+
 // --- FLUXO ---
 
 function handleClassSelection(classId) {
-    if (!classId) return;
+    if (!classId) {
+        // Esconde o botão de exclusão se nenhuma turma for selecionada
+        deleteClassQuickBtn.classList.add('hidden'); 
+        return;
+    }
     const selectedClass = currentClasses.find(c => c.id === classId);
     if (!selectedClass) {
         currentClassId = null;
         currentClassData = null;
         clearStudentList();
+        // Esconde o botão de exclusão
+        deleteClassQuickBtn.classList.add('hidden');
         return;
     }
     currentClassId = classId;
     currentClassData = selectedClass;
+    
+    // NOVO: Mostra o botão de exclusão rápida
+    deleteClassQuickBtn.classList.remove('hidden');
+
     if (dateInputEl.value) {
         loadFrequencyForDate(currentClassId, dateInputEl.value);
     } else {
@@ -498,6 +569,15 @@ function handleDateChange(dateString) {
         loadFrequencyForDate(currentClassId, dateString);
     } else {
         renderStudentList(currentClassData.students, {});
+    }
+}
+function handleDeleteClassQuick() {
+    if (currentClassId && currentClassData) {
+        // Usa o mesmo modal, mas com o contexto da turma já selecionada
+        showClassModal(true, currentClassData);
+        // O modal já tem a lógica de exclusão (deleteClassBtn)
+    } else {
+        showMessage("Selecione uma turma para excluir.", 'error');
     }
 }
 
