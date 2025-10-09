@@ -15,14 +15,13 @@ const appId = 'default-app-id'; // Defina um ID padrão se não estiver no Canva
 const initialAuthToken = null;
 
 // --- CONFIGURAÇÃO FIREBASE ---
-let firebaseConfig = {
-    // ESTA CHAVE DEVE SER SUBSTITUÍDA PELA SUA PRÓPRIA CHAVE DO FIREBASE
-    apiKey: "SUA_API_KEY_AQUI", // Exemplo: "AIzaSyDo6uA_fJGbKqLfj9kwUu1JSkC34HGlWk0"
-    authDomain: "SEU_PROJETO.firebaseapp.com",
-    projectId: "SEU_PROJETO",
-    storageBucket: "SEU_PROJETO.appspot.com", // IMPORTANTE: O storageBucket deve ser configurado
-    messagingSenderId: "SEU_SENDER_ID",
-    appId: "SEU_APP_ID_WEB"
+const firebaseConfig = {
+  apiKey: "AIzaSyDo6uA_fJGbKqLfj9kwUu1JSkC34HGlWk0",
+  authDomain: "registrar-frenquencia.firebaseapp.com",
+  projectId: "registrar-frenquencia",
+  storageBucket: "registrar-frenquencia.firebasestorage.app",
+  messagingSenderId: "571143130821",
+  appId: "1:571143130821:web:812eb820306f6b0338eaac"
 };
 
 
