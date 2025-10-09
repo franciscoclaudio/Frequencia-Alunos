@@ -35,71 +35,73 @@
             
             <header class="pb-4 border-b border-gray-200">
                 <h1 class="text-3xl font-extrabold text-primary">Registro de Frequência 🗓️</h1>
-                <p id="userIdDisplay" class="text-xs text-gray-500 mt-1">Usuário: Carregando...</p>
+                <p id="userIdDisplay" class="text-xs text-gray-500 italic">Carregando...</p>
             </header>
 
-            <!-- Loading State -->
-            <div id="loading" class="flex items-center justify-center p-8 bg-indigo-50 rounded-lg">
-                <svg class="animate-spin h-5 w-5 text-primary mr-3" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Conectando ao banco de dados...</span>
+            <!-- Conteúdo Principal e Ferramentas -->
+            <div id="loadingMessage" class="text-center text-lg font-medium text-gray-600">
+                Conectando ao Firebase...
             </div>
 
-            <!-- Formulário e Listas (Visível após o carregamento) -->
             <div id="appContent" class="hidden space-y-6">
                 
-                <!-- 1. Seleção de Turma -->
-                <section class="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-3">Selecione a Turma Base</h2>
-                    <div class="flex flex-col md:flex-row gap-4">
-                        <select id="classSelect" class="flex-grow p-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-                            <option value="">-- Selecione uma Turma --</option>
-                        </select>
-                        <button id="loadClassBtn" class="bg-primary hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition duration-150">
-                            Carregar Lista
-                        </button>
-                    </div>
-                    <p class="text-sm text-red-500 mt-2 hidden" id="classError">Selecione uma turma para continuar.</p>
-                </section>
-
-                <!-- 2. Registro de Frequência -->
-                <section id="attendanceSection" class="p-4 bg-white border border-secondary/30 rounded-lg shadow-inner hidden space-y-4">
-                    <h2 class="text-xl font-semibold text-gray-700 flex justify-between items-center">
-                        Registro para Turma: <span id="currentClassName" class="text-secondary font-bold"></span>
-                    </h2>
+                <!-- Ferramentas de Seleção -->
+                <div class="flex flex-wrap items-center gap-4">
                     
-                    <div class="flex space-x-4 items-center">
-                        <label for="attendanceDate" class="text-gray-600">Data:</label>
-                        <input type="date" id="attendanceDate" class="p-2 border border-gray-300 rounded-lg flex-grow max-w-xs" required>
+                    <!-- Seleção de Turma -->
+                    <div class="flex-grow">
+                        <label for="classSelect" class="block text-sm font-medium text-gray-700 mb-1">Turma:</label>
+                        <select id="classSelect" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50" disabled>
+                            <option value="" disabled selected>Carregando Turmas...</option>
+                        </select>
                     </div>
 
-                    <div id="studentListContainer" class="scrollable-content border border-gray-300 rounded-lg p-3 bg-white">
-                        <!-- Lista de alunos será injetada aqui -->
-                        <p class="text-gray-500 text-center py-4">Nenhum aluno carregado. Selecione uma turma acima.</p>
+                    <!-- Botão de Editar Turma -->
+                    <button id="editClassBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 whitespace-nowrap" style="min-width: 100px;" disabled>
+                        Editar Turma Base
+                    </button>
+                    
+                    <!-- Botão de Adicionar Turma -->
+                    <button id="addClassBtn" class="bg-primary hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 whitespace-nowrap" style="min-width: 100px;">
+                        + Nova Turma Base
+                    </button>
+                </div>
+                
+                <!-- Seleção de Data -->
+                <div class="flex items-center gap-4">
+                    <div class="flex-grow">
+                        <label for="dateInput" class="block text-sm font-medium text-gray-700 mb-1">Data:</label>
+                        <input type="date" id="dateInput" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                    </div>
+                    <button id="loadRosterBtn" class="bg-secondary hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 mt-5" disabled>
+                        Carregar Lista
+                    </button>
+                </div>
+
+                <div id="statusMessage" class="text-sm text-center text-red-600 font-medium hidden"></div>
+
+                <!-- Lista de Chamada -->
+                <div id="rosterContainer" class="hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-3">Lista de Chamada</h2>
+                    <div id="rosterList" class="scrollable-content border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
+                        <!-- Alunos serão injetados aqui -->
                     </div>
 
-                    <div class="flex justify-between items-center pt-2">
-                        <button id="saveAttendanceBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition duration-150 disabled:opacity-50" disabled>
+                    <div class="mt-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+                        <button id="exportDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 w-full sm:w-auto">
+                            Exportar Dados (CSV)
+                        </button>
+                        <button id="saveAttendanceBtn" class="bg-primary hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-xl shadow-lg transition-colors duration-150 w-full sm:w-auto font-extrabold" disabled>
                             Salvar Frequência
                         </button>
-                        <button id="exportDataBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-lg shadow-md transition duration-150" disabled>
-                            Exportar Turma (CSV)
-                        </button>
                     </div>
-                </section>
-
-                <!-- Modal para Adicionar Turma (Opcional, para demonstrar o banco) -->
-                <button id="showAddClassModalBtn" class="text-sm text-primary hover:text-indigo-700 mt-4 p-2 w-full text-center border border-primary/50 rounded-lg transition duration-150">
-                    + Adicionar Nova Turma Base
-                </button>
+                </div>
             </div>
 
-            <!-- Mensagem/Modal Customizado -->
-            <div id="messageBox" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-                <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full space-y-4">
-                    <h3 id="messageTitle" class="text-xl font-bold text-primary"></h3>
+            <!-- Toast/Modal de Mensagens -->
+            <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+                <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full space-y-4">
+                    <h3 id="messageTitle" class="text-xl font-bold text-primary">Mensagem</h3>
                     <p id="messageText" class="text-gray-700"></p>
                     <button id="closeMessageBtn" class="bg-primary hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg float-right">Fechar</button>
                 </div>
@@ -108,20 +110,26 @@
             <!-- Modal para Adicionar Turma -->
             <div id="addClassModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
                 <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full space-y-4">
-                    <h3 class="text-2xl font-bold text-primary mb-4">Adicionar Nova Turma Base</h3>
+                    <h3 id="modalTitle" class="text-2xl font-bold text-primary mb-4">Adicionar Nova Turma Base</h3>
                     <input type="text" id="classNameInput" placeholder="Nome da Turma (Ex: 3º B - Matutino)" class="w-full p-3 border border-gray-300 rounded-lg">
                     <textarea id="studentListInput" placeholder="Lista de Alunos (Um nome por linha)" rows="5" class="w-full p-3 border border-gray-300 rounded-lg"></textarea>
-                    <div class="flex justify-end space-x-3 mt-4">
-                        <button id="cancelAddClassBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg">Cancelar</button>
-                        <button id="saveClassBtn" class="bg-secondary hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg">Salvar Turma</button>
+                    <div class="flex flex-col sm:flex-row justify-between gap-3 mt-4">
+                        <button id="deleteClassBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 whitespace-nowrap hidden">
+                            Excluir Turma
+                        </button>
+                        <div class="flex justify-end space-x-3 w-full">
+                            <button id="cancelAddClassBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg">Cancelar</button>
+                            <button id="saveClassBtn" class="bg-secondary hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg">Salvar Turma</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
         </div>
     </div>
-
-    <!-- Link para o arquivo de script JS separado -->
+    
+    <!-- Link para o arquivo de script principal -->
     <script type="module" src="frequencia_app_teste_script.js"></script>
+
 </body>
 </html>
