@@ -48,7 +48,8 @@ const studentListFileEl = document.getElementById('studentListFile');
 const cancelAddClassBtn = document.getElementById('cancelAddClassBtn');
 const saveClassBtn = document.getElementById('saveClassBtn');
 const deleteClassBtn = document.getElementById('deleteClassBtn');
-const openAddClassModalBtn = document.getElementById('openAddClassModalBtn');
+const openAddClassBtn = document.getElementById('openAddClassBtn');
+const openEditClassBtn = document.getElementById('openEditClassBtn');
 const deleteClassQuickBtn = document.getElementById('deleteClassQuickBtn');
 const exportCSVBtn = document.getElementById('exportCSVBtn');
 
@@ -265,10 +266,10 @@ async function loadFrequencyForDate(classId, dateString) {
     currentFrequencyDocId = null;
     saveAttendanceBtn.textContent = 'Salvar Frequência';
     saveAttendanceBtn.disabled = false;
-    exportCSVBtn.disabled = false; // Habilita o botão CSV
+    exportCSVBtn.disabled = false;
     
     if (!classId || !dateString) {
-        exportCSVBtn.disabled = true; // Desabilita se faltar data ou turma
+        exportCSVBtn.disabled = true;
         return;
     }
     
@@ -376,7 +377,9 @@ function clearStudentList() {
     currentClassTitleEl.textContent = 'Selecione uma turma acima';
     dateDisplayEl.textContent = '';
     saveAttendanceBtn.disabled = true;
-    exportCSVBtn.disabled = true; // Desabilita o botão CSV ao limpar a lista
+    exportCSVBtn.disabled = true;
+    openEditClassBtn.classList.add('hidden');
+    deleteClassQuickBtn.classList.add('hidden');
 }
 
 /**
@@ -450,7 +453,7 @@ function renderStudentList(students, records) {
     currentClassTitleEl.textContent = currentClassData.name;
     dateDisplayEl.textContent = dateInputEl.value ? `Data: ${new Date(dateInputEl.value + 'T00:00:00').toLocaleDateString('pt-BR')}` : '';
     saveAttendanceBtn.disabled = false;
-    exportCSVBtn.disabled = false; // Garante que o botão CSV esteja ativo
+    exportCSVBtn.disabled = false;
 }
 
 window.handlePresenceChange = function(checkbox) {
@@ -544,8 +547,9 @@ function exportAttendanceToCSV() {
 
 function handleClassSelection(classId) {
     if (!classId) {
-        // Esconde o botão de exclusão se nenhuma turma for selecionada
-        deleteClassQuickBtn.classList.add('hidden'); 
+        // Esconde os botões se nenhuma turma for selecionada
+        openEditClassBtn.classList.add('hidden'); 
+        deleteClassQuickBtn.classList.add('hidden');
         return;
     }
     const selectedClass = currentClasses.find(c => c.id === classId);
@@ -553,14 +557,16 @@ function handleClassSelection(classId) {
         currentClassId = null;
         currentClassData = null;
         clearStudentList();
-        // Esconde o botão de exclusão
+        // Esconde os botões
+        openEditClassBtn.classList.add('hidden');
         deleteClassQuickBtn.classList.add('hidden');
         return;
     }
     currentClassId = classId;
     currentClassData = selectedClass;
     
-    // NOVO: Mostra o botão de exclusão rápida
+    // NOVO: Mostra os botões de edição e exclusão rápida
+    openEditClassBtn.classList.remove('hidden');
     deleteClassQuickBtn.classList.remove('hidden');
 
     if (dateInputEl.value) {
@@ -583,13 +589,12 @@ function handleDateChange(dateString) {
     }
 }
 
-function handleDeleteClassQuick() {
+function handleEditClassQuick() {
     if (currentClassId && currentClassData) {
-        // Abre o modal em modo de edição, forçando a exibição do botão de exclusão
+        // Abre o modal em modo de edição, com os dados da turma selecionada
         showClassModal(true, currentClassData);
-        // A exclusão real é feita pela função deleteClass() acionada pelo deleteClassBtn dentro do modal.
     } else {
-        showMessage("Selecione uma turma para excluir.", 'error');
+        showMessage("Selecione uma turma para editar.", 'error');
     }
 }
 
@@ -597,7 +602,9 @@ function handleDeleteClassQuick() {
 
 closeMessageBtn.addEventListener('click', closeMessage);
 logoUploadInput.addEventListener('change', handleLogoUpload);
-openAddClassModalBtn.addEventListener('click', () => showClassModal(false));
+openAddClassBtn.addEventListener('click', () => showClassModal(false));
+openEditClassBtn.addEventListener('click', handleEditClassQuick); 
+
 cancelAddClassBtn.addEventListener('click', hideClassModal);
 saveClassBtn.addEventListener('click', saveClass);
 deleteClassBtn.addEventListener('click', deleteClass);
@@ -607,7 +614,7 @@ dateInputEl.addEventListener('change', (e) => handleDateChange(e.target.value));
 saveAttendanceBtn.addEventListener('click', registerFrequency);
 
 // LISTENERS ADICIONAIS:
-deleteClassQuickBtn.addEventListener('click', handleDeleteClassQuick);
+deleteClassQuickBtn.addEventListener('click', handleEditClassQuick);
 exportCSVBtn.addEventListener('click', exportAttendanceToCSV);
 
 // Data padrão (hoje)
