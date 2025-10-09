@@ -118,6 +118,16 @@ button[disabled] {
     }
 }
 
+/* Aumenta a imagem do logo */
+#logoImg {
+    width: 80px !important;
+    height: 80px !important;
+    min-width: 80px !important;
+    min-height: 80px !important;
+    max-width: 100px;
+    max-height: 100px;
+}
+
 /*
 Nota: A maior parte do visual usa Tailwind direto no HTML.
 Este CSS aprimora botões, labels, switches e campos customizados para a nova lógica.
