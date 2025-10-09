@@ -521,8 +521,12 @@ function exportAttendanceToCSV() {
     const className = currentClassData.name;
     const studentItems = studentsListContainerEl.querySelectorAll('.student-item');
 
-    // 1. Cabeçalho do CSV
-    let csvContent = "Nome;Presente;Pontualidade;Harmonia;Participação\n";
+    // NOVAS LINHAS: Nome da Turma e Data no topo do arquivo
+    let csvContent = `Turma: ${className}\n`;
+    csvContent += `Data: ${dateString}\n`;
+
+    // 1. Cabeçalho das Colunas
+    csvContent += "Nome;Presente;Pontualidade;Harmonia;Participação\n";
 
     // 2. Linhas de dados
     studentItems.forEach(item => {
