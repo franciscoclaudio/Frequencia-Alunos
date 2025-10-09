@@ -1,7 +1,7 @@
 // Importações do Firebase SDK v11 (JavaScript)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, getDoc, getDocs, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 
 // Ativa o log de debug para o Firestore
@@ -16,6 +16,7 @@ let firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__fir
 
 if (Object.keys(firebaseConfig).length === 0) {
     // Configuração de Fallback (MANTIDA PARA GARANTIR A EXECUÇÃO EM AMBIENTES FORA DO CANVAS)
+    // ESTA CHAVE DEVE SER SUBSTITUÍDA PELA SUA PRÓPRIA CHAVE DO FIREBASE
     firebaseConfig = {
         apiKey: "AIzaSyDo6uA_fJGbKqLfj9kwUu1JSkC34HGlWk0",
         authDomain: "registrar-frenquencia.firebaseapp.com",
@@ -25,422 +26,533 @@ if (Object.keys(firebaseConfig).length === 0) {
         appId: "1:571143130821:web:812eb820306f6b0338eaac"
     };
 }
-// --- FIM DA CONFIGURAÇÃO FIREBASE ---
 
-// Variáveis de Estado Global
-let app, db, auth;
+
+// Variáveis de Estado do Aplicativo
+let app;
+let db;
+let auth;
 let userId = null;
-let classes = []; 
-let currentRoster = [];
+let currentClasses = [];
 let currentClassId = null;
+let currentRoster = [];
+let currentAttendanceRecord = {}; // { studentName: boolean }
 
-// Referências DOM (JavaScript)
-const loadingEl = document.getElementById('loading');
-const appContentEl = document.getElementById('appContent');
-const userIdDisplayEl = document.getElementById('userIdDisplay');
+
+// Referências ao DOM
 const classSelectEl = document.getElementById('classSelect');
-const attendanceSectionEl = document.getElementById('attendanceSection');
-const currentClassNameEl = document.getElementById('currentClassName');
-const studentListContainerEl = document.getElementById('studentListContainer');
+const loadRosterBtn = document.getElementById('loadRosterBtn');
 const saveAttendanceBtn = document.getElementById('saveAttendanceBtn');
-const exportDataBtn = document.getElementById('exportDataBtn');
-const loadClassBtn = document.getElementById('loadClassBtn');
-const classErrorEl = document.getElementById('classError');
-const attendanceDateEl = document.getElementById('attendanceDate');
-
-// Refs do Modal de Mensagem
-const messageBox = document.getElementById('messageBox');
-const messageTitle = document.getElementById('messageTitle');
-const messageText = document.getElementById('messageText');
-const closeMessageBtn = document.getElementById('closeMessageBtn');
-
-// Refs do Modal Adicionar Turma
+const rosterListEl = document.getElementById('rosterList');
+const dateInputEl = document.getElementById('dateInput');
+const addClassBtn = document.getElementById('addClassBtn');
+const editClassBtn = document.getElementById('editClassBtn');
 const addClassModal = document.getElementById('addClassModal');
-const showAddClassModalBtn = document.getElementById('showAddClassModalBtn');
 const cancelAddClassBtn = document.getElementById('cancelAddClassBtn');
 const saveClassBtn = document.getElementById('saveClassBtn');
-const classNameInput = document.getElementById('classNameInput');
-const studentListInput = document.getElementById('studentListInput');
+const deleteClassBtn = document.getElementById('deleteClassBtn');
+const classNameInputEl = document.getElementById('classNameInput');
+const studentListInputEl = document.getElementById('studentListInput');
+const loadingEl = document.getElementById('loadingMessage');
+const appContentEl = document.getElementById('appContent');
+const userIdDisplayEl = document.getElementById('userIdDisplay');
+const rosterContainerEl = document.getElementById('rosterContainer');
+const messageModal = document.getElementById('messageModal');
+const messageTitleEl = document.getElementById('messageTitle');
+const messageTextEl = document.getElementById('messageText');
+const closeMessageBtn = document.getElementById('closeMessageBtn');
+const statusMessageEl = document.getElementById('statusMessage');
+const exportDataBtn = document.getElementById('exportDataBtn');
+const modalTitleEl = document.getElementById('modalTitle');
 
-// --- Funções de UI e Utilidade (JavaScript) ---
+
+// --- FUNÇÕES DE UTILIDADE ---
 
 /**
- * Exibe uma mensagem de feedback para o usuário.
- * @param {string} title 
- * @param {string} text 
+ * Exibe uma mensagem de toast/modal personalizada.
+ * @param {string} title - Título da mensagem.
+ * @param {string} text - Conteúdo da mensagem.
  */
 function showMessage(title, text) {
-    messageTitle.textContent = title;
-    messageText.textContent = text;
-    messageBox.classList.remove('hidden');
-    messageBox.classList.add('flex');
+    messageTitleEl.textContent = title;
+    messageTextEl.textContent = text;
+    messageModal.classList.remove('hidden');
+    messageModal.classList.add('flex');
 }
 
-closeMessageBtn.addEventListener('click', () => {
-    messageBox.classList.add('hidden');
-    messageBox.classList.remove('flex');
-});
+/**
+ * Fecha a mensagem de toast/modal.
+ */
+function closeMessage() {
+    messageModal.classList.add('hidden');
+    messageModal.classList.remove('flex');
+}
 
 /**
- * Mostra ou esconde o modal de Adicionar Turma.
- * @param {boolean} show 
+ * Obtém o caminho base da coleção de turmas do Firestore para o usuário.
  */
-function toggleAddClassModal(show) {
-    if (show) {
-        addClassModal.classList.remove('hidden');
-        addClassModal.classList.add('flex');
-    } else {
-        addClassModal.classList.add('hidden');
-        addClassModal.classList.remove('flex');
+function getClassesCollectionRef() {
+    if (!db || !userId) return null;
+    return collection(db, `artifacts/${appId}/users/${userId}/classes`);
+}
+
+/**
+ * Obtém o caminho base da coleção de registros de frequência.
+ */
+function getAttendanceCollectionRef() {
+    if (!db || !userId) return null;
+    return collection(db, `artifacts/${appId}/users/${userId}/attendance_records`);
+}
+
+/**
+ * Formata a data para a chave do documento do Firestore.
+ * @param {string} classId - ID da turma.
+ * @param {string} date - Data no formato AAAA-MM-DD.
+ * @returns {string} - Chave formatada (ex: TurmaA_2025-10-09).
+ */
+function getAttendanceDocId(classId, date) {
+    return `${classId}_${date}`;
+}
+
+/**
+ * Define a data atual como valor padrão no input de data.
+ */
+function setDefaultDate() {
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    dateInputEl.value = formattedDate;
+}
+
+// --- FUNÇÕES DE RENDERIZAÇÃO ---
+
+/**
+ * Renderiza a lista de turmas no <select>.
+ * @param {Array<Object>} classes - Array de objetos de turma.
+ */
+function renderClassesSelect(classes) {
+    classSelectEl.innerHTML = ''; // Limpa as opções existentes
+    classSelectEl.disabled = false;
+    editClassBtn.disabled = true;
+
+    if (classes.length === 0) {
+        classSelectEl.innerHTML = '<option value="" disabled selected>Nenhuma Turma Encontrada</option>';
+        loadRosterBtn.disabled = true;
+        rosterContainerEl.classList.add('hidden');
+        return;
     }
-}
 
-showAddClassModalBtn.addEventListener('click', () => toggleAddClassModal(true));
-cancelAddClassBtn.addEventListener('click', () => toggleAddClassModal(false));
-
-/**
- * Renderiza a lista de turmas no dropdown e atualiza o estado `classes`.
- * @param {Array} classList 
- */
-function renderClasses(classList) {
-    classes = classList; // Atualiza o cache
-    classSelectEl.innerHTML = '<option value="">-- Selecione uma Turma --</option>';
-    classList.forEach(cls => {
+    classSelectEl.innerHTML = '<option value="" disabled selected>Selecione uma turma</option>';
+    classes.forEach(cls => {
         const option = document.createElement('option');
         option.value = cls.id;
         option.textContent = cls.name;
         classSelectEl.appendChild(option);
     });
-
-    // Restaura a seleção anterior, se houver
-    if (currentClassId) {
-        classSelectEl.value = currentClassId;
-    }
 }
 
 /**
- * Renderiza a lista de alunos para registro de presença.
- * @param {Array<Object>} presenceRecords - Registros de presença salvos para pré-seleção.
+ * Renderiza a lista de alunos para a chamada.
+ * @param {Array<string>} roster - Array de nomes de alunos.
+ * @param {Object} attendance - Objeto de frequência {nomeAluno: true/false}.
  */
-function renderRoster(presenceRecords = []) {
-    studentListContainerEl.innerHTML = '';
+function renderRoster(roster, attendance = {}) {
+    rosterListEl.innerHTML = '';
+    rosterContainerEl.classList.remove('hidden');
+    saveAttendanceBtn.disabled = false;
 
-    if (currentRoster.length === 0) {
-        studentListContainerEl.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum aluno cadastrado nesta turma.</p>';
+    if (roster.length === 0) {
+        rosterListEl.innerHTML = '<p class="text-gray-500">A turma selecionada não tem alunos cadastrados.</p>';
+        saveAttendanceBtn.disabled = true;
         return;
     }
 
-    // Cria um mapa studentId -> isPresent para fácil lookup
-    const presenceMap = presenceRecords.reduce((map, record) => {
-        map[record.studentId] = record.present;
-        return map;
-    }, {});
+    roster.forEach(studentName => {
+        const studentId = studentName.replace(/\s+/g, '_'); // Cria um ID seguro
+        const isPresent = attendance[studentName] !== false; // Padrão é Presente se não houver registro
 
-
-    const ul = document.createElement('ul');
-    ul.className = 'divide-y divide-gray-200';
-
-    currentRoster.forEach(student => {
-        // Verifica o status de presença (true/false) ou default para false (Falta)
-        const isPresent = presenceMap[student.id] !== undefined ? presenceMap[student.id] : false;
-        const checkedAttribute = isPresent ? 'checked' : '';
-
-        const li = document.createElement('li');
-        li.className = 'flex justify-between items-center p-3 hover:bg-indigo-50 transition duration-100';
-        li.innerHTML = `
-            <span class="text-gray-800 flex-grow">${student.name}</span>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" data-student-id="${student.id}" class="sr-only peer presence-checkbox" ${checkedAttribute}>
-                <div class="w-11 h-6 bg-red-400 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                <span class="ml-3 text-sm font-medium text-gray-700">Presente</span>
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between p-3 bg-white rounded-lg shadow-sm border border-gray-100';
+        item.innerHTML = `
+            <span class="text-gray-800 font-medium">${studentName}</span>
+            
+            <!-- Switch de Presença Customizado -->
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="presence-${studentId}" data-student-name="${studentName}" class="sr-only presence-checkbox" ${isPresent ? 'checked' : ''}>
+                <div class="w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 transition-colors duration-300"></div>
+                <span class="ml-3 text-sm font-medium text-gray-900">
+                    ${isPresent ? 'Presente' : 'Faltou'}
+                </span>
             </label>
         `;
-        ul.appendChild(li);
+        rosterListEl.appendChild(item);
+
+        // Adiciona listener para atualizar o texto 'Presente/Faltou'
+        const checkbox = item.querySelector(`#presence-${studentId}`);
+        const textSpan = item.querySelector('span:last-child');
+        checkbox.addEventListener('change', () => {
+            textSpan.textContent = checkbox.checked ? 'Presente' : 'Faltou';
+        });
     });
-    studentListContainerEl.appendChild(ul);
-
-    saveAttendanceBtn.disabled = false;
 }
 
-// --- Funções de Banco de Dados (Firestore) (JavaScript) ---
+// --- FUNÇÕES DE MANIPULAÇÃO DO FIREBASE ---
 
 /**
- * Retorna a referência da coleção base do usuário.
- * @param {string} collectionName 
- * @returns {object} Referência da coleção.
- */
-function getUserCollection(collectionName) {
-    if (!db || !userId) throw new Error("Database not initialized or User ID missing.");
-    // Usamos a coleção privada do usuário: /artifacts/{appId}/users/{userId}/{collectionName}
-    return collection(db, `artifacts/${appId}/users/${userId}/${collectionName}`);
-}
-
-/**
- * Inicia o listener em tempo real para as Turmas do usuário.
+ * Listener que carrega todas as turmas do Firestore em tempo real.
  */
 function setupClassesListener() {
-    const q = query(getUserCollection('classes'));
-    onSnapshot(q, (snapshot) => {
-        const classList = [];
-        snapshot.forEach((doc) => {
-            classList.push({ id: doc.id, ...doc.data() });
-        });
-        renderClasses(classList);
+    const classesRef = getClassesCollectionRef();
+    if (!classesRef) return;
+
+    onSnapshot(classesRef, (snapshot) => {
+        currentClasses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderClassesSelect(currentClasses);
+
+        // Se uma turma estava selecionada, tenta re-selecioná-la
+        if (currentClassId) {
+            classSelectEl.value = currentClassId;
+            // Se a turma foi deletada, reseta a seleção
+            if (!currentClasses.find(c => c.id === currentClassId)) {
+                currentClassId = null;
+                classSelectEl.value = "";
+                rosterContainerEl.classList.add('hidden');
+                editClassBtn.disabled = true;
+            }
+        }
     }, (error) => {
         console.error("Erro ao carregar turmas:", error);
-        // NOTA: Se houver um erro de permissão (PERMISSION DENIED), esta mensagem aparecerá.
-        showMessage("Erro de Carregamento", "Não foi possível carregar as turmas do banco de dados. (Verifique as Regras de Segurança do Firestore)");
+        showMessage("Erro de Conexão", "Não foi possível carregar as turmas. Verifique sua conexão e regras do Firebase.");
     });
 }
 
 /**
- * Adiciona uma nova turma ao banco de dados.
+ * Salva ou atualiza a definição de uma turma no Firestore.
+ * @param {string} className - Nome da turma.
+ * @param {Array<string>} studentRoster - Lista de alunos.
+ * @param {string | null} docId - ID do documento para atualização (ou null para novo).
  */
-async function addNewClass() {
-    const className = classNameInput.value.trim();
-    const studentListText = studentListInput.value.trim();
-
-    if (!className || !studentListText) {
-        showMessage("Campos Vazios", "Por favor, preencha o nome da turma e a lista de alunos.");
+async function saveClassBase(className, studentRoster, docId = null) {
+    const classesRef = getClassesCollectionRef();
+    if (!classesRef) {
+        showMessage("Erro", "Usuário não autenticado.");
         return;
     }
 
+    const classData = {
+        name: className,
+        roster: studentRoster,
+        createdAt: new Date().toISOString()
+    };
+
     try {
-        // 1. Processa a lista de alunos
-        const students = studentListText.split('\n')
-            .map(name => name.trim())
-            .filter(name => name.length > 0)
-            .map(name => ({
-                // Cria um ID único simples para cada aluno
-                id: crypto.randomUUID(), 
-                name: name
-            }));
-
-        if (students.length === 0) {
-            showMessage("Lista Vazia", "A lista de alunos não pode estar vazia.");
-            return;
+        if (docId) {
+            // Atualizar Turma Existente
+            const classDocRef = doc(classesRef, docId);
+            await setDoc(classDocRef, classData);
+            showMessage("Sucesso", `Turma '${className}' atualizada com sucesso.`);
+        } else {
+            // Adicionar Nova Turma
+            await addDoc(classesRef, classData);
+            showMessage("Sucesso", `Nova turma '${className}' adicionada com sucesso.`);
         }
-
-        // 2. Salva a turma no Firestore
-        await addDoc(getUserCollection('classes'), {
-            name: className,
-            // É melhor armazenar a lista de alunos diretamente aqui para simplicidade
-            students: students, 
-            createdAt: new Date().toISOString()
-        });
-
-        toggleAddClassModal(false);
-        classNameInput.value = '';
-        studentListInput.value = '';
-        showMessage("Sucesso!", `A turma "${className}" foi salva no banco de dados.`);
-
     } catch (error) {
-        console.error("Erro ao salvar a turma:", error);
-        showMessage("Erro ao Salvar", "Não foi possível salvar a nova turma. Tente novamente. (Verifique as Regras de Segurança)");
+        console.error("Erro ao salvar turma:", error);
+        showMessage("Erro ao Salvar", `Não foi possível salvar a turma. Detalhes: ${error.message}`);
+    } finally {
+        addClassModal.classList.add('hidden');
     }
 }
 
-saveClassBtn.addEventListener('click', addNewClass);
-
 /**
- * Busca o registro de frequência para a turma e data selecionadas.
- * @returns {Promise<Array<Object> | null>} Lista de registros de presença ou null.
+ * Carrega a lista de alunos e, se houver, o registro de frequência para a data selecionada.
  */
-async function fetchAttendance(classId, date) {
-    const docId = `${classId}_${date}`;
-    try {
-        const docRef = doc(getUserCollection('attendance_records'), docId);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            return docSnap.data().records;
-        }
-        return null;
-    } catch (error) {
-        console.error("Erro ao buscar frequência anterior:", error);
-        // Mostra a mensagem, mas não impede a renderização, apenas impede o preenchimento.
-        showMessage("Aviso", "Não foi possível verificar registros anteriores para esta data.");
-        return null;
-    }
-}
-
-
-/**
- * Carrega a lista de alunos da turma selecionada e a frequência.
- */
-loadClassBtn.addEventListener('click', async () => {
+async function loadRosterAndAttendance() {
     currentClassId = classSelectEl.value;
-    classErrorEl.classList.add('hidden');
+    const date = dateInputEl.value;
+    statusMessageEl.classList.add('hidden');
 
-    if (!currentClassId) {
-        classErrorEl.classList.remove('hidden');
-        attendanceSectionEl.classList.add('hidden');
+    if (!currentClassId || !date) {
+        statusMessageEl.textContent = "Selecione uma turma e uma data.";
+        statusMessageEl.classList.remove('hidden');
+        rosterContainerEl.classList.add('hidden');
         return;
     }
 
-    const selectedClass = classes.find(c => c.id === currentClassId);
-    if (selectedClass) {
-        currentRoster = selectedClass.students || [];
-        currentClassNameEl.textContent = selectedClass.name;
+    const selectedClass = currentClasses.find(c => c.id === currentClassId);
+    if (!selectedClass) return;
 
-        // Define a data atual se não houver data selecionada
-        if (!attendanceDateEl.value) {
-            attendanceDateEl.valueAsDate = new Date(); 
+    // 1. Define a lista de alunos atual
+    currentRoster = selectedClass.roster || [];
+
+    const attendanceDocId = getAttendanceDocId(currentClassId, date);
+    const attendanceRef = doc(getAttendanceCollectionRef(), attendanceDocId);
+
+    try {
+        // 2. Tenta carregar o registro de frequência
+        const attendanceSnapshot = await getDoc(attendanceRef);
+
+        if (attendanceSnapshot.exists()) {
+            // Registro encontrado: Pré-seleciona os status de presença
+            currentAttendanceRecord = attendanceSnapshot.data().attendance;
+            statusMessageEl.textContent = `Registro de frequência de ${date} encontrado e carregado.`;
+            statusMessageEl.classList.remove('hidden');
+            statusMessageEl.classList.remove('text-red-600');
+            statusMessageEl.classList.add('text-green-600');
+        } else {
+            // Nenhum registro encontrado: Inicia com todos Presentes
+            currentAttendanceRecord = {};
+            currentRoster.forEach(name => currentAttendanceRecord[name] = true);
+            statusMessageEl.textContent = `Nenhum registro encontrado para ${date}. Preenchendo a lista.`;
+            statusMessageEl.classList.remove('hidden');
+            statusMessageEl.classList.add('text-red-600');
+            statusMessageEl.classList.remove('text-green-600');
         }
 
-        attendanceSectionEl.classList.remove('hidden');
-        exportDataBtn.disabled = false;
-        saveAttendanceBtn.disabled = true; // Desabilita enquanto busca dados
+        // 3. Renderiza a lista com o status de presença carregado
+        renderRoster(currentRoster, currentAttendanceRecord);
 
-        // Busca a frequência salva para a data atual
-        const currentDate = attendanceDateEl.value;
-        const savedRecords = await fetchAttendance(currentClassId, currentDate);
-
-        renderRoster(savedRecords); // Renderiza a lista, pré-selecionando se houver registros
-        saveAttendanceBtn.disabled = false;
-
-    } else {
-        showMessage("Erro", "Turma selecionada não encontrada.");
+    } catch (error) {
+        console.error("Erro ao carregar frequência:", error);
+        showMessage("Erro de Carga", `Não foi possível carregar a lista de frequência. Detalhes: ${error.message}`);
     }
-});
-
-// Adiciona um listener para recarregar o roster quando a data muda
-attendanceDateEl.addEventListener('change', async () => {
-    if (currentClassId) {
-        saveAttendanceBtn.disabled = true;
-        const currentDate = attendanceDateEl.value;
-        const savedRecords = await fetchAttendance(currentClassId, currentDate);
-        renderRoster(savedRecords);
-        saveAttendanceBtn.disabled = false;
-    }
-});
-
+}
 
 /**
  * Salva o registro de frequência atual no Firestore.
  */
 async function saveAttendance() {
-    if (!currentClassId) {
-        showMessage("Aviso", "Nenhuma turma selecionada para salvar.");
+    const date = dateInputEl.value;
+    if (!currentClassId || !date) {
+        showMessage("Erro", "Selecione a turma e a data antes de salvar.");
         return;
     }
 
-    const date = document.getElementById('attendanceDate').value;
-    if (!date) {
-        showMessage("Aviso", "Selecione uma data para o registro.");
+    const attendance = {};
+    const checkboxes = rosterListEl.querySelectorAll('.presence-checkbox');
+    let hasChanges = false;
+
+    checkboxes.forEach(checkbox => {
+        const studentName = checkbox.dataset.studentName;
+        // O status é FALSO (faltou) se o checkbox NÃO estiver marcado
+        attendance[studentName] = checkbox.checked;
+
+        // Verifica se há alguma mudança significativa a ser salva
+        if (attendance[studentName] !== currentAttendanceRecord[studentName]) {
+            hasChanges = true;
+        }
+    });
+
+    // Se a frequência for exatamente a mesma que a carregada, não salva
+    if (!hasChanges && Object.keys(currentAttendanceRecord).length > 0) {
+        showMessage("Atenção", "Nenhuma alteração detectada. O registro de frequência não foi salvo.");
         return;
     }
 
-    const checkboxes = document.querySelectorAll('.presence-checkbox');
-    const records = Array.from(checkboxes).map(checkbox => ({
-        studentId: checkbox.dataset.studentId,
-        present: checkbox.checked
-    }));
+    const attendanceDocId = getAttendanceDocId(currentClassId, date);
+    const attendanceRef = doc(getAttendanceCollectionRef(), attendanceDocId);
 
-    // Usamos a data e o ID da turma para criar um ID único para o registro
-    const docId = `${currentClassId}_${date}`;
+    const attendanceData = {
+        classId: currentClassId,
+        date: date,
+        attendance: attendance,
+        updatedAt: new Date().toISOString()
+    };
 
     try {
-        // setDoc irá criar ou sobrescrever (atualizar) o registro, o que é ideal.
-        await setDoc(doc(getUserCollection('attendance_records'), docId), {
-            classId: currentClassId,
-            date: date,
-            records: records,
-            savedAt: new Date().toISOString(),
-            className: currentClassNameEl.textContent
-        });
-        showMessage("Sucesso!", `Frequência de ${date} salva/atualizada para a turma ${currentClassNameEl.textContent}.`);
+        await setDoc(attendanceRef, attendanceData);
+        // Atualiza o registro local após salvar
+        currentAttendanceRecord = attendance;
+        showMessage("Sucesso", `Frequência da turma salva para a data ${date}.`);
+
+        statusMessageEl.textContent = `Frequência de ${date} salva com sucesso.`;
+        statusMessageEl.classList.remove('hidden', 'text-red-600');
+        statusMessageEl.classList.add('text-green-600');
+
     } catch (error) {
         console.error("Erro ao salvar frequência:", error);
-        showMessage("Erro ao Salvar", "Não foi possível salvar o registro de frequência. (Verifique as Regras de Segurança)");
+        showMessage("Erro ao Salvar", `Não foi possível salvar o registro. Detalhes: ${error.message}`);
     }
 }
 
-saveAttendanceBtn.addEventListener('click', saveAttendance);
-
-
 /**
- * Exporta os dados de frequência da turma selecionada para CSV.
+ * Deleta a turma base do Firestore.
  */
-async function exportData() {
-    if (!currentClassId) {
-        showMessage("Aviso", "Nenhuma turma selecionada para exportação.");
+async function deleteClassBase(classId, className) {
+    if (!confirm(`Tem certeza que deseja EXCLUIR permanentemente a turma "${className}"? Isso também removerá todos os registros de frequência associados (se houver).`)) {
         return;
     }
 
-    exportDataBtn.disabled = true;
-
     try {
-        // 1. Recupera todos os registros de presença para esta turma
-        const q = query(getUserCollection('attendance_records'), where('classId', '==', currentClassId));
-        const snapshot = await getDocs(q);
+        // 1. Deleta o documento da turma base
+        const classDocRef = doc(getClassesCollectionRef(), classId);
+        await deleteDoc(classDocRef);
 
-        if (snapshot.empty) {
-            showMessage("Exportação", "Nenhum registro de frequência encontrado para esta turma.");
-            exportDataBtn.disabled = false;
-            return;
-        }
+        // 2. (OPCIONAL) Limpa todos os registros de frequência associados
+        // ATENÇÃO: Deletar coleções inteiras com um único comando é complexo no Firestore.
+        // Aqui, apenas deletamos a turma base e notificamos o usuário.
+        // A coleção 'attendance_records' pode conter registros 'pendurados' que o usuário deve limpar manualmente.
 
-        const attendanceHistory = snapshot.docs.map(doc => doc.data());
-        const className = currentClassNameEl.textContent;
-
-        // 2. Cria o cabeçalho CSV: Data, Nome do Aluno 1, Nome do Aluno 2, ...
-        const studentNames = currentRoster.map(s => s.name);
-        let csvContent = "Data;" + studentNames.join(";") + "\n";
-
-        // 3. Preenche as linhas de dados
-        attendanceHistory.forEach(record => {
-            // Mapeia os IDs dos alunos para seus status de presença
-            const presenceMap = record.records.reduce((map, r) => {
-                map[r.studentId] = r.present ? 'P' : 'F'; // P=Presente, F=Falta
-                return map;
-            }, {});
-
-            // Cria a linha para a data
-            let row = record.date;
-            currentRoster.forEach(student => {
-                // Garante que a ordem das colunas de presença corresponda à ordem dos nomes
-                row += ";" + (presenceMap[student.id] || 'N/D'); // N/D = Não Definido
-            });
-            csvContent += row + "\n";
-        });
-
-        // 4. Cria e dispara o download do arquivo CSV
-        const filename = `${className.replace(/[^a-z0-9]/gi, '_')}_Frequencia_Export.csv`;
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-
-        if (link.download !== undefined) { 
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showMessage("Exportação Concluída", `O arquivo CSV "${filename}" foi baixado com sucesso.`);
-        } else {
-            // Fallback para navegadores que não suportam 'download' (raros hoje)
-            showMessage("Aviso", "Seu navegador pode não suportar download direto. Copie o conteúdo da console se necessário.");
-            console.log("Conteúdo CSV:\n", csvContent);
-        }
+        showMessage("Sucesso", `Turma "${className}" excluída com sucesso!`);
+        addClassModal.classList.add('hidden');
 
     } catch (error) {
-        console.error("Erro na Exportação:", error);
-        showMessage("Erro de Exportação", "Ocorreu um erro ao gerar ou baixar o arquivo CSV.");
-    } finally {
-        exportDataBtn.disabled = false;
+        console.error("Erro ao deletar turma:", error);
+        showMessage("Erro", `Não foi possível excluir a turma. Detalhes: ${error.message}`);
     }
 }
 
-exportDataBtn.addEventListener('click', exportData);
+/**
+ * Exporta todos os dados (turmas e frequências) para um arquivo CSV.
+ */
+async function exportData() {
+    try {
+        // 1. Carregar Turmas
+        const classesRef = getClassesCollectionRef();
+        if (!classesRef) return showMessage("Erro", "Usuário não autenticado para exportar dados.");
 
+        const classesSnapshot = await getDocs(classesRef);
+        const classesMap = {}; // { classId: className }
+        classesSnapshot.forEach(doc => {
+            classesMap[doc.id] = doc.data().name;
+        });
 
-// --- Inicialização da Aplicação (JavaScript) ---
+        // 2. Carregar Registros de Frequência
+        const attendanceRef = getAttendanceCollectionRef();
+        const attendanceSnapshot = await getDocs(attendanceRef);
+
+        let csvContent = "Turma,Data,Nome do Aluno,Status\n";
+
+        attendanceSnapshot.forEach(doc => {
+            const data = doc.data();
+            const className = classesMap[data.classId] || data.classId; // Usa o nome ou o ID
+            const date = data.date;
+            const attendance = data.attendance || {}; // Objeto {aluno: true/false}
+
+            for (const studentName in attendance) {
+                const status = attendance[studentName] ? "Presente" : "Faltou";
+                csvContent += `"${className}","${date}","${studentName}","${status}"\n`;
+            }
+        });
+
+        if (attendanceSnapshot.empty) {
+            return showMessage("Informação", "Não há registros de frequência para exportar.");
+        }
+
+        // 3. Criar e Baixar o CSV
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'relatorio_frequencia.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showMessage("Sucesso", "Dados exportados para 'relatorio_frequencia.csv'.");
+
+    } catch (error) {
+        console.error("Erro na exportação:", error);
+        showMessage("Erro", `Erro ao exportar dados: ${error.message}`);
+    }
+}
+
+// --- CONFIGURAÇÃO DE EVENTOS ---
 
 /**
- * Inicializa o Firebase e realiza a autenticação.
+ * Abre o modal para adicionar/editar turma.
+ * @param {boolean} isEdit - True se for modo de edição.
  */
+function openClassModal(isEdit = false) {
+    if (isEdit) {
+        const selectedClass = currentClasses.find(c => c.id === classSelectEl.value);
+        if (!selectedClass) return;
+
+        modalTitleEl.textContent = "Editar Turma Base";
+        classNameInputEl.value = selectedClass.name;
+        studentListInputEl.value = selectedClass.roster.join('\n');
+        saveClassBtn.dataset.classId = selectedClass.id;
+        deleteClassBtn.classList.remove('hidden');
+
+    } else {
+        modalTitleEl.textContent = "Adicionar Nova Turma Base";
+        classNameInputEl.value = '';
+        studentListInputEl.value = '';
+        saveClassBtn.dataset.classId = '';
+        deleteClassBtn.classList.add('hidden');
+    }
+
+    addClassModal.classList.remove('hidden');
+    addClassModal.classList.add('flex');
+}
+
+// Adiciona Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    setDefaultDate(); // Seta a data padrão ao carregar
+
+    // Eventos de Botões Principais
+    addClassBtn.addEventListener('click', () => openClassModal(false));
+    editClassBtn.addEventListener('click', () => {
+        if (classSelectEl.value) openClassModal(true);
+    });
+    loadRosterBtn.addEventListener('click', loadRosterAndAttendance);
+    saveAttendanceBtn.addEventListener('click', saveAttendance);
+    exportDataBtn.addEventListener('click', exportData);
+
+    // Eventos do Modal
+    cancelAddClassBtn.addEventListener('click', () => {
+        addClassModal.classList.add('hidden');
+    });
+
+    saveClassBtn.addEventListener('click', () => {
+        const name = classNameInputEl.value.trim();
+        const roster = studentListInputEl.value.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        const docId = saveClassBtn.dataset.classId || null;
+
+        if (name && roster.length > 0) {
+            saveClassBase(name, roster, docId);
+        } else {
+            showMessage("Atenção", "Preencha o nome da turma e a lista de alunos.");
+        }
+    });
+
+    deleteClassBtn.addEventListener('click', () => {
+        const classId = saveClassBtn.dataset.classId;
+        const className = classNameInputEl.value;
+        if (classId) {
+            deleteClassBase(classId, className);
+        }
+    });
+
+
+    // Eventos de Seleção
+    classSelectEl.addEventListener('change', () => {
+        currentClassId = classSelectEl.value;
+        editClassBtn.disabled = !currentClassId;
+        loadRosterBtn.disabled = !currentClassId;
+        // Limpa e esconde a lista ao trocar de turma
+        rosterContainerEl.classList.add('hidden');
+        rosterListEl.innerHTML = '';
+        statusMessageEl.classList.add('hidden');
+    });
+
+    // Eventos do Modal de Mensagem
+    closeMessageBtn.addEventListener('click', closeMessage);
+
+    // Evento para Carregar a Lista ao Alterar a Data (se uma turma já estiver selecionada)
+    dateInputEl.addEventListener('change', () => {
+        if (classSelectEl.value) {
+            loadRosterAndAttendance();
+        }
+    });
+
+    // Inicialização
+    initializeAppAndAuth();
+});
+
+
+// --- FUNÇÃO DE INICIALIZAÇÃO E AUTENTICAÇÃO ---
+
 async function initializeAppAndAuth() {
     try {
         if (Object.keys(firebaseConfig).length === 0) {
@@ -479,7 +591,7 @@ async function initializeAppAndAuth() {
 
     } catch (error) {
         console.error("Erro durante a inicialização:", error);
-        loadingEl.innerHTML = `<span class="text-red-600">Erro de Inicialização: ${error.message}.</span>`;
+        loadingEl.innerHTML = `<span class=\"text-red-600\">Erro de Inicialização: ${error.message}.</span>`;
     }
 }
 
