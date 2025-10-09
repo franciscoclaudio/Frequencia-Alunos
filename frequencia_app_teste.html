@@ -15,6 +15,7 @@
                     },
                     colors: {
                         'primary': '#4f46e5',
+                        // COR SECUNDÁRIA ALTERADA DE LARANJA PARA VERDE
                         'secondary': '#10b981', 
                     }
                 }
@@ -35,7 +36,7 @@
                         <input type="file" id="logoUpload" accept="image/*" class="hidden">
                     </div>
                     <div class="flex-grow">
-                        <h1 class="text-xl font-semibold text-primary mb-3">Controle de Frequência</h1>
+                        <h1 class="text-2xl font-bold text-gray-800">Controle de Frequência</h1>
                         <p id="userIdDisplay" class="text-sm text-gray-500 mt-1">Carregando usuário...</p>
                     </div>
                 </div>
@@ -112,4 +113,21 @@
                     <textarea id="studentListInput" placeholder="Lista de Alunos (Um nome por linha)" rows="5" class="w-full p-3 border border-gray-300 rounded-lg"></textarea>
                     <div>
                         <label for="studentListFile" class="block text-xs text-primary underline cursor-pointer mt-2">Importar lista .txt</label>
-                        <input type="file" id="
+                        <input type="file" id="studentListFile" accept=".txt" class="hidden">
+                    </div>
+                    <div class="flex flex-col sm:flex-row justify-between gap-3 mt-4">
+                        <button id="deleteClassBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 whitespace-nowrap hidden">
+                            Excluir Turma
+                        </button>
+                        <div class="flex justify-end space-x-3 w-full">
+                            <button id="cancelAddClassBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg">Cancelar</button>
+                            <button id="saveClassBtn" class="bg-secondary hover:bg-emerald-600 text-white font-medium py-2 px-4 rounded-lg">Salvar Turma</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="frequencia_app_teste_script.js"></script>
+</body>
+</html>
