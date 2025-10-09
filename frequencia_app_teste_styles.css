@@ -18,9 +18,21 @@ colors: {
 .container-app {
 min-height: 100vh;
 display: flex;
+flex-direction: column; /* Altera para coluna para a logo ficar acima do card */
 justify-content: center;
-align-items: flex-start;
+align-items: center;
 padding: 1rem;
+}
+
+/* Estilo para o Logo Principal ADICIONADO AQUI */
+.main-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+    border-radius: 50%; /* Torna a logo circular */
+    border: 3px solid #4f46e5; /* primary color */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Estilo para a lista de alunos (para permitir scroll) */
