@@ -52,12 +52,8 @@ const openAddClassModalBtn = document.getElementById('openAddClassModalBtn');
 
 // --- UTILIDADES ---
 
-/**
- * Exibe a mensagem de feedback em um toast.
- */
 function showMessage(message, type = 'success') {
     messageTextEl.textContent = message;
-    
     messageToast.classList.remove('bg-green-500', 'bg-red-500', 'bg-blue-500');
     if (type === 'error') {
         messageToast.classList.add('bg-red-500');
@@ -66,20 +62,15 @@ function showMessage(message, type = 'success') {
     } else {
         messageToast.classList.add('bg-green-500');
     }
-    
     messageToast.classList.remove('hidden');
     messageToast.classList.add('flex');
     messageToast.classList.remove('opacity-0');
     messageToast.classList.add('opacity-100');
-    
     setTimeout(() => {
         closeMessage();
     }, 4000);
 }
 
-/**
- * Fecha o toast de mensagem.
- */
 function closeMessage() {
     messageToast.classList.add('opacity-0');
     setTimeout(() => {
@@ -88,17 +79,12 @@ function closeMessage() {
     }, 300);
 }
 
-/**
- * Manipula o upload e preview da logo.
- */
 function handleLogoUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
     const reader = new FileReader();
     reader.onload = function(e) {
         logoImg.src = e.target.result;
-        // Salva no localStorage para persistir
         try {
             localStorage.setItem('customLogo', e.target.result);
             showMessage('Logo atualizada!', 'info');
@@ -109,9 +95,6 @@ function handleLogoUpload(event) {
     reader.readAsDataURL(file);
 }
 
-/**
- * Carrega logo salva do localStorage.
- */
 function loadSavedLogo() {
     try {
         const savedLogo = localStorage.getItem('customLogo');
@@ -123,9 +106,6 @@ function loadSavedLogo() {
     }
 }
 
-/**
- * Mostra o modal de Adicionar/Editar Turma.
- */
 function showClassModal(isEditing = false, classData = null) {
     if (isEditing && classData) {
         modalTitleEl.textContent = `Editar: ${classData.name}`;
@@ -140,14 +120,11 @@ function showClassModal(isEditing = false, classData = null) {
         deleteClassBtn.classList.add('hidden');
         currentClassId = null;
     }
-    studentListFileEl.value = ''; // Limpa o input de arquivo
+    studentListFileEl.value = '';
     addClassModal.classList.remove('hidden');
     addClassModal.classList.add('flex');
 }
 
-/**
- * Esconde o modal de Adicionar/Editar Turma.
- */
 function hideClassModal() {
     addClassModal.classList.add('hidden');
     addClassModal.classList.remove('flex');
@@ -157,39 +134,27 @@ function hideClassModal() {
     studentListFileEl.value = '';
 }
 
-/**
- * Processa arquivo TXT com lista de alunos.
- */
 function handleStudentListFile(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
     const reader = new FileReader();
     reader.onload = function(e) {
         const fileContent = e.target.result;
         const names = fileContent.split(/\r?\n/)
             .map(name => name.trim())
             .filter(name => name.length > 0);
-        
-        // Atualiza o textarea com os nomes
         studentListInputEl.value = names.join('\n');
-        
-        // Se não houver nome de turma, sugere o nome do arquivo
         if (!classNameInputEl.value.trim()) {
             const fileName = file.name.replace(/\.txt$/i, '');
             classNameInputEl.value = fileName;
         }
-        
         showMessage(`${names.length} alunos carregados do arquivo`, 'info');
     };
     reader.readAsText(file);
 }
 
-// --- FUNÇÕES DE FIREBASE / FIRESTORE ---
+// --- FIREBASE / FIRESTORE ---
 
-/**
- * Obtém o path da coleção de Turmas.
- */
 function getClassCollectionPath() {
     if (!userId) {
         console.error("UserID não definido.");
@@ -198,9 +163,6 @@ function getClassCollectionPath() {
     return `users/${userId}/classes`;
 }
 
-/**
- * Obtém o path da coleção de Frequências.
- */
 function getFrequencyCollectionPath(classId) {
     if (!classId) {
         console.error("Class ID não definido para frequência.");
@@ -209,22 +171,16 @@ function getFrequencyCollectionPath(classId) {
     return `${getClassCollectionPath()}/${classId}/frequency_records`;
 }
 
-/**
- * Configura o listener em tempo real para as Turmas do usuário.
- */
 function setupClassesListener() {
     const classesPath = getClassCollectionPath();
     if (!classesPath) return;
-
     const classesCollectionRef = collection(db, classesPath);
     const q = query(classesCollectionRef);
-
     onSnapshot(q, (snapshot) => {
         currentClasses = [];
         snapshot.forEach((doc) => {
             currentClasses.push({ id: doc.id, ...doc.data() });
         });
-        console.log("Turmas atualizadas:", currentClasses);
         updateClassSelects();
     }, (error) => {
         console.error("Erro ao ouvir a coleção de Turmas:", error);
@@ -232,30 +188,22 @@ function setupClassesListener() {
     });
 }
 
-/**
- * Salva (adiciona ou atualiza) uma turma.
- */
 async function saveClass() {
     const className = classNameInputEl.value.trim();
     const studentList = studentListInputEl.value.trim();
-
     if (!className || !studentList) {
         showMessage("Preencha o nome da turma e a lista de alunos.", 'error');
         return;
     }
-
     const students = studentList.split('\n')
         .map(name => name.trim())
         .filter(name => name.length > 0);
-
     if (students.length === 0) {
         showMessage("A lista de alunos não pode estar vazia.", 'error');
         return;
     }
-
     const classesPath = getClassCollectionPath();
     if (!classesPath) return;
-
     try {
         const classData = {
             name: className,
@@ -263,7 +211,6 @@ async function saveClass() {
             createdAt: currentClassId ? currentClassData.createdAt : new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-
         if (currentClassId) {
             const classDocRef = doc(db, classesPath, currentClassId);
             await setDoc(classDocRef, classData);
@@ -272,38 +219,30 @@ async function saveClass() {
             await addDoc(collection(db, classesPath), classData);
             showMessage(`Turma "${className}" adicionada!`);
         }
-
         hideClassModal();
-
     } catch (error) {
         console.error("Erro ao salvar turma:", error);
         showMessage("Erro ao salvar turma: " + error.message, 'error');
     }
 }
 
-/**
- * Exclui a turma atualmente aberta no modal de edição.
- */
 async function deleteClass() {
     if (!currentClassId) return;
-
     if (!window.confirm(`Excluir a turma "${classNameInputEl.value.trim()}" e todos os registros? IRREVERSÍVEL!`)) {
         return;
     }
-
     const classesPath = getClassCollectionPath();
     if (!classesPath) return;
-
     try {
         const frequencyPath = getFrequencyCollectionPath(currentClassId);
         const q = query(collection(db, frequencyPath));
         const snapshot = await getDocs(q);
 
-        const deletePromises = snapshot.docs.map(docToDelete => 
+        const deletePromises = snapshot.docs.map(docToDelete =>
             deleteDoc(doc(db, frequencyPath, docToDelete.id))
         );
         await Promise.all(deletePromises);
-        
+
         const classDocRef = doc(db, classesPath, currentClassId);
         await deleteDoc(classDocRef);
 
@@ -320,26 +259,18 @@ async function deleteClass() {
     }
 }
 
-/**
- * Busca o registro de frequência para a data e turma selecionadas.
- */
 async function loadFrequencyForDate(classId, dateString) {
     currentFrequencyDocId = null;
     saveAttendanceBtn.textContent = 'Salvar Frequência';
     saveAttendanceBtn.disabled = false;
-
     if (!classId || !dateString) return;
-
     const frequencyPath = getFrequencyCollectionPath(classId);
     if (!frequencyPath) return;
-
     const frequencyDocRef = doc(db, frequencyPath, dateString);
-
     try {
         const docSnap = await getDoc(frequencyDocRef);
         const students = currentClassData.students;
         let frequencyRecords = {};
-
         if (docSnap.exists()) {
             const data = docSnap.data();
             frequencyRecords = data.records || {};
@@ -349,9 +280,7 @@ async function loadFrequencyForDate(classId, dateString) {
         } else {
             showMessage(`Novo registro para ${dateString}`, 'info');
         }
-
         renderStudentList(students, frequencyRecords);
-
     } catch (error) {
         console.error("Erro ao carregar frequência:", error);
         showMessage("Erro ao carregar frequência: " + error.message, 'error');
@@ -360,7 +289,7 @@ async function loadFrequencyForDate(classId, dateString) {
 }
 
 /**
- * Salva o registro de frequência.
+ * Salva o registro de frequência incluindo critérios opcionais.
  */
 async function registerFrequency() {
     if (!currentClassId || !dateInputEl.value) {
@@ -374,15 +303,15 @@ async function registerFrequency() {
 
     const records = {};
     const studentItems = studentsListContainerEl.querySelectorAll('.student-item');
-    
+
     studentItems.forEach(item => {
         const name = item.dataset.studentName;
         const presenceCheckbox = item.querySelector('.presence-checkbox');
-        // Novos selects
+        // Novos critérios opcionais
         const pontualidade = item.querySelector('.pontualidade-select')?.value || "não observado";
         const harmonia = item.querySelector('.harmonia-select')?.value || "não observado";
         const participacao = item.querySelector('.participacao-select')?.value || "não observado";
-    
+
         records[name] = {
             present: presenceCheckbox.checked,
             pontualidade: pontualidade || "não observado",
@@ -412,21 +341,16 @@ async function registerFrequency() {
     }
 }
 
-// --- FUNÇÕES DE RENDERIZAÇÃO E UI ---
+// --- RENDERIZAÇÃO E UI ---
 
-/**
- * Atualiza o select de turmas.
- */
 function updateClassSelects() {
     classesSelectEl.innerHTML = '<option value="" disabled selected>-- Selecione uma Turma --</option>';
-    
     currentClasses.forEach(classData => {
         const option = document.createElement('option');
         option.value = classData.id;
         option.textContent = `${classData.name} (${classData.students.length} alunos)`;
         classesSelectEl.appendChild(option);
     });
-
     if (currentClassId && currentClasses.some(c => c.id === currentClassId)) {
         classesSelectEl.value = currentClassId;
     } else {
@@ -436,9 +360,6 @@ function updateClassSelects() {
     }
 }
 
-/**
- * Limpa a lista de alunos.
- */
 function clearStudentList() {
     studentsListContainerEl.innerHTML = `
         <p class="text-center text-gray-500 py-4">Selecione uma turma e data.</p>
@@ -449,11 +370,10 @@ function clearStudentList() {
 }
 
 /**
- * Renderiza a lista de alunos.
+ * Renderiza a lista de alunos incluindo os campos opcionais.
  */
 function renderStudentList(students, records) {
     studentsListContainerEl.innerHTML = '';
-    
     const listHtml = students.map((name, index) => {
         const record = records[name] || { present: true };
         const isPresent = record.present;
@@ -462,13 +382,17 @@ function renderStudentList(students, records) {
         const switchBgColor = isPresent ? 'bg-primary' : 'bg-gray-200';
         const switchTranslate = isPresent ? 'translate-x-6' : 'translate-x-1';
 
+        // Critérios opcionais: valor salvo ou vazio
+        const pontualidadeValue = record.pontualidade && record.pontualidade !== "não observado" ? record.pontualidade : "";
+        const harmoniaValue = record.harmonia && record.harmonia !== "não observado" ? record.harmonia : "";
+        const participacaoValue = record.participacao && record.participacao !== "não observado" ? record.participacao : "";
+
         return `
             <li data-student-name="${name}" class="student-item ${studentRowClasses} p-3 rounded-lg transition-colors duration-300 border-b border-gray-100 last:border-0">
                 <div class="flex items-center justify-between">
                     <span class="text-base font-medium text-gray-900 truncate pr-4">
                         ${indexDisplay}. ${name}
                     </span>
-                    
                     <label class="flex items-center cursor-pointer flex-shrink-0">
                         <span class="mr-2 text-sm font-medium text-gray-700 min-w-[60px] text-right">${isPresent ? 'Presente' : 'Ausente'}</span>
                         <div class="relative">
@@ -481,20 +405,43 @@ function renderStudentList(students, records) {
                         </div>
                     </label>
                 </div>
+                <!-- Critérios opcionais -->
+                <div class="flex flex-col md:flex-row gap-2 mt-2">
+                    <label class="text-xs text-gray-700 font-medium">
+                        Pontualidade:
+                        <select class="pontualidade-select border rounded px-1 py-0.5">
+                            <option value="" ${pontualidadeValue === "" ? 'selected' : ''}>Não Observado</option>
+                            <option value="pontual" ${pontualidadeValue === "pontual" ? 'selected' : ''}>Pontual</option>
+                            <option value="atrasado" ${pontualidadeValue === "atrasado" ? 'selected' : ''}>Atrasado</option>
+                        </select>
+                    </label>
+                    <label class="text-xs text-gray-700 font-medium">
+                        Harmonia:
+                        <select class="harmonia-select border rounded px-1 py-0.5">
+                            <option value="" ${harmoniaValue === "" ? 'selected' : ''}>Não Observado</option>
+                            <option value="harmonioso" ${harmoniaValue === "harmonioso" ? 'selected' : ''}>Harmonioso</option>
+                            <option value="conflituoso" ${harmoniaValue === "conflituoso" ? 'selected' : ''}>Conflituoso</option>
+                        </select>
+                    </label>
+                    <label class="text-xs text-gray-700 font-medium">
+                        Participação:
+                        <select class="participacao-select border rounded px-1 py-0.5">
+                            <option value="" ${participacaoValue === "" ? 'selected' : ''}>Não Observado</option>
+                            <option value="participativo" ${participacaoValue === "participativo" ? 'selected' : ''}>Participativo</option>
+                            <option value="pouco participativo" ${participacaoValue === "pouco participativo" ? 'selected' : ''}>Pouco participativo</option>
+                        </select>
+                    </label>
+                </div>
             </li>
         `;
     }).join('');
 
     studentsListContainerEl.innerHTML = `<ul class="space-y-1">${listHtml}</ul>`;
-    
     currentClassTitleEl.textContent = currentClassData.name;
     dateDisplayEl.textContent = dateInputEl.value ? `Data: ${new Date(dateInputEl.value + 'T00:00:00').toLocaleDateString('pt-BR')}` : '';
     saveAttendanceBtn.disabled = false;
 }
 
-/**
- * Lida com a mudança de presença.
- */
 window.handlePresenceChange = function(checkbox) {
     const studentItem = checkbox.closest('.student-item');
     const isPresent = checkbox.checked;
@@ -521,11 +468,10 @@ window.handlePresenceChange = function(checkbox) {
     }
 }
 
-// --- FUNÇÕES DE CONTROLE DE FLUXO ---
+// --- FLUXO ---
 
 function handleClassSelection(classId) {
     if (!classId) return;
-
     const selectedClass = currentClasses.find(c => c.id === classId);
     if (!selectedClass) {
         currentClassId = null;
@@ -533,10 +479,8 @@ function handleClassSelection(classId) {
         clearStudentList();
         return;
     }
-
     currentClassId = classId;
     currentClassData = selectedClass;
-
     if (dateInputEl.value) {
         loadFrequencyForDate(currentClassId, dateInputEl.value);
     } else {
@@ -550,7 +494,6 @@ function handleDateChange(dateString) {
         dateInputEl.value = '';
         return;
     }
-
     if (dateString) {
         loadFrequencyForDate(currentClassId, dateString);
     } else {
@@ -558,7 +501,7 @@ function handleDateChange(dateString) {
     }
 }
 
-// --- CONFIGURAÇÃO DE EVENTOS ---
+// --- EVENTOS ---
 
 closeMessageBtn.addEventListener('click', closeMessage);
 logoUploadInput.addEventListener('change', handleLogoUpload);
@@ -571,47 +514,31 @@ classesSelectEl.addEventListener('change', (e) => handleClassSelection(e.target.
 dateInputEl.addEventListener('change', (e) => handleDateChange(e.target.value));
 saveAttendanceBtn.addEventListener('click', registerFrequency);
 
-// Configuração de data padrão (hoje)
+// Data padrão (hoje)
 const today = new Date().toISOString().split('T')[0];
 dateInputEl.value = today;
 
-// --- INICIALIZAÇÃO DA APLICAÇÃO ---
+// --- INICIALIZAÇÃO ---
 
 async function initializeAppAndAuth() {
-    console.log("🚀 Iniciando aplicação...");
-    
     try {
         app = initializeApp(firebaseConfig);
-        console.log("✅ Firebase inicializado");
-        
         db = getFirestore(app);
-        console.log("✅ Firestore conectado");
-        
         auth = getAuth(app);
-        console.log("✅ Auth configurado");
-
-        console.log("🔐 Tentando autenticação anônima...");
         await signInAnonymously(auth);
-        console.log("✅ Autenticação anônima bem-sucedida!");
-
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 userId = user.uid;
                 userIdDisplayEl.textContent = `Usuário: ${userId.substring(0, 8)}...`;
-
                 loadingEl.classList.add('hidden');
                 appContentEl.classList.remove('hidden');
-
-                // Carrega logo salva
                 loadSavedLogo();
-
                 setupClassesListener();
             } else {
                 userIdDisplayEl.textContent = `Usuário: Desconectado`;
                 showMessage('Erro de autenticação. Recarregue a página.', 'error');
             }
         });
-
     } catch (error) {
         console.error("❌ Erro durante a inicialização:", error);
         loadingEl.innerHTML = `<p class="text-red-600 text-center font-medium">Erro: ${error.message}</p>`;
@@ -619,5 +546,4 @@ async function initializeAppAndAuth() {
     }
 }
 
-// Inicia a aplicação
 initializeAppAndAuth();
