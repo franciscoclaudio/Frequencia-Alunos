@@ -1,53 +1,57 @@
 /* --- CONFIGURAÇÃO TAILWIND (Mantida aqui por organização, mas o script está no HTML para execução) ---
 tailwind.config = {
-theme: {
-extend: {
-fontFamily: {
-sans: ['Inter', 'sans-serif'],
-},
-colors: {
-'primary': '#4f46e5',
-'secondary': '#f97316',
-}
-}
-}
+    theme: {
+        extend: {
+            fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+                'primary': '#4f46e5', /* Cor principal (Indigo) */
+                'secondary': '#f97316', /* Cor secundária (Orange) */
+            }
+        }
+    }
 }
 */
 
 /* Estilos de Layout Principal */
 .container-app {
-min-height: 100vh;
-display: flex;
-flex-direction: column; /* Altera para coluna para a logo ficar acima do card */
-justify-content: center;
-align-items: center;
-padding: 1rem;
-}
-
-/* Estilo para o Logo Principal ADICIONADO AQUI */
-.main-logo {
-    width: 80px;
-    height: 80px;
-    object-fit: contain;
-    margin-bottom: 1rem;
-    border-radius: 50%; /* Torna a logo circular */
-    border: 3px solid #4f46e5; /* primary color */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Alinha o card principal no topo */
+    padding: 1rem;
 }
 
 /* Estilo para a lista de alunos (para permitir scroll) */
 .scrollable-content {
-max-height: 50vh;
-overflow-y: auto;
+    max-height: 50vh; /* Altura máxima para permitir a rolagem */
+    overflow-y: auto;
 }
 
-/* Estilo para a transição do switch de presença */
-.presence-checkbox:checked + div {
-transition-duration: 300ms;
+/* Estilo para esconder o checkbox nativo do switch de presença */
+.presence-checkbox {
+    /* Esconde o input checkbox nativo para que possamos estilizar o seu rótulo */
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.presence-toggle-label {
+    /* Garante que o rótulo seja um bloco de clique */
+    display: inline-block;
+    cursor: pointer;
+}
+
+.presence-checkbox:checked + .presence-toggle-bg {
+    /* Estilo para transição ao marcar (o restante do visual é Tailwind) */
+    transition-duration: 300ms;
 }
 
 /*
 Nota: A maioria dos estilos do aplicativo utiliza classes utilitárias
 diretamente no HTML (Tailwind). Este arquivo contém apenas os estilos
-que não podem ser facilmente expressos como classes utilitárias.
+de ajuste de layout e de componentes (como o switch) que não podem
+ser facilmente expressos como classes utilitárias.
 */
