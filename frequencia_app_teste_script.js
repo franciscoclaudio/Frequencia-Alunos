@@ -9,27 +9,21 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        // --- INÍCIO DA CORREÇÃO PARA AMBIENTE EXTERNO ---
+        // --- INÍCIO DA CONFIGURAÇÃO FIREBASE (CORRIGIDA) ---
         let firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         
-        // Se a configuração automática (variável global) não existir (ex: rodando no Github Pages), 
-        // use a configuração inserida manualmente abaixo.
         if (Object.keys(firebaseConfig).length === 0) {
+             // Configuração inserida pelo usuário:
              firebaseConfig = {
-                // =========================================================================
-                // PASSO OBRIGATÓRIO: COLE A SUA CONFIGURAÇÃO COMPLETA DO FIREBASE AQUI!
-                // =========================================================================
-                apiKey: "YOUR_API_KEY", 
-                authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-                projectId: "YOUR_PROJECT_ID", 
-                storageBucket: "YOUR_PROJECT_ID.appspot.com",
-                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-                appId: "YOUR_APP_ID"
-                // =========================================================================
+                apiKey: "AIzaSyDo6uA_fJGbKqLfj9kwUu1JSkC34HGlWk0",
+                authDomain: "registrar-frenquencia.firebaseapp.com",
+                projectId: "registrar-frenquencia",
+                storageBucket: "registrar-frenquencia.firebasestorage.app",
+                messagingSenderId: "571143130821",
+                appId: "1:571143130821:web:812eb820306f6b0338eaac"
             };
-            // Nota: O 'initialAuthToken' será nulo, então signInAnonymously será usado.
         }
-        // --- FIM DA CORREÇÃO PARA AMBIENTE EXTERNO ---
+        // --- FIM DA CONFIGURAÇÃO FIREBASE (CORRIGIDA) ---
 
         // Variáveis de Estado Global
         let app, db, auth;
@@ -179,7 +173,8 @@
                 renderClasses(classList);
             }, (error) => {
                 console.error("Erro ao carregar turmas:", error);
-                showMessage("Erro de Carregamento", "Não foi possível carregar as turmas do banco de dados.");
+                // NOTA: Se houver um erro de permissão (PERMISSION DENIED), esta mensagem aparecerá.
+                showMessage("Erro de Carregamento", "Não foi possível carregar as turmas do banco de dados. (Verifique as Regras de Segurança do Firestore)");
             });
         }
         
@@ -226,7 +221,7 @@
 
             } catch (error) {
                 console.error("Erro ao salvar a turma:", error);
-                showMessage("Erro ao Salvar", "Não foi possível salvar a nova turma. Tente novamente.");
+                showMessage("Erro ao Salvar", "Não foi possível salvar a nova turma. Tente novamente. (Verifique as Regras de Segurança)");
             }
         }
         
@@ -295,7 +290,7 @@
                 showMessage("Sucesso!", `Frequência de ${date} salva para a turma ${currentClassNameEl.textContent}.`);
             } catch (error) {
                 console.error("Erro ao salvar frequência:", error);
-                showMessage("Erro ao Salvar", "Não foi possível salvar o registro de frequência.");
+                showMessage("Erro ao Salvar", "Não foi possível salvar o registro de frequência. (Verifique as Regras de Segurança)");
             }
         }
         
@@ -387,7 +382,8 @@
         async function initializeAppAndAuth() {
             try {
                 if (Object.keys(firebaseConfig).length === 0) {
-                     throw new Error("Configuração do Firebase não encontrada. Preencha o placeholder no código.");
+                     // Esta verificação agora é redundante, mas mantida para segurança
+                     throw new Error("Configuração do Firebase não encontrada.");
                 }
                 
                 app = initializeApp(firebaseConfig);
