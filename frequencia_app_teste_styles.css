@@ -1,54 +1,41 @@
-/* * Estilos customizados para a Aplicação de Registro de Frequência.
- * Estes estilos complementam as classes do Tailwind CSS.
- */
-
-/* Garante que o corpo da página use o Inter e a cor de fundo padrão */
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f3f4f6; /* gray-100 */
+/* --- CONFIGURAÇÃO TAILWIND (Mantida aqui por organização, mas o script está no HTML para execução) ---
+tailwind.config = {
+theme: {
+extend: {
+fontFamily: {
+sans: ['Inter', 'sans-serif'],
+},
+colors: {
+'primary': '#4f46e5',
+'secondary': '#f97316',
 }
+}
+}
+}
+*/
 
-/* Centraliza o card principal no viewport */
+/* Estilos de Layout Principal */
 .container-app {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    /* Alinha ao topo em telas grandes, centraliza em telas pequenas */
-    align-items: flex-start;
-    padding: 1rem;
+min-height: 100vh;
+display: flex;
+justify-content: center;
+align-items: flex-start;
+padding: 1rem;
 }
 
-/* Estilo para a área de rolagem da lista de alunos */
+/* Estilo para a lista de alunos (para permitir scroll) */
 .scrollable-content {
-    /* Define uma altura máxima para evitar que a lista ocupe toda a tela */
-    max-height: 50vh; 
-    overflow-y: auto;
-    /* Estilização sutil da barra de rolagem para navegadores Webkit (Chrome/Safari) */
-    scrollbar-width: thin;
-    scrollbar-color: #9ca3af #f3f4f6; /* gray-400 e gray-100 */
+max-height: 50vh;
+overflow-y: auto;
 }
 
-.scrollable-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.scrollable-content::-webkit-scrollbar-thumb {
-    background-color: #9ca3af; /* gray-400 */
-    border-radius: 4px;
-}
-
-.scrollable-content::-webkit-scrollbar-track {
-    background: #f3f4f6; /* gray-100 */
-}
-
-/* Estilo para o modal de mensagem (para garantir que cubra tudo) */
-#messageBox, #addClassModal {
-    z-index: 50; /* Garante que fique acima de outros elementos */
-    background-color: rgba(0, 0, 0, 0.5); /* Fundo preto semi-transparente */
-}
-
-/* Estilo para o switch de presença (Melhoria visual sutil) */
+/* Estilo para a transição do switch de presença */
 .presence-checkbox:checked + div {
-    /* Adiciona uma transição mais suave ao mudar de cor (vermelho para verde) */
-    transition-duration: 300ms;
+transition-duration: 300ms;
 }
+
+/*
+Nota: A maioria dos estilos do aplicativo utiliza classes utilitárias
+diretamente no HTML (Tailwind). Este arquivo contém apenas os estilos
+que não podem ser facilmente expressos como classes utilitárias.
+*/
