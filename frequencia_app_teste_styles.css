@@ -1,0 +1,12 @@
+/* Estilos customizados para melhorar o visual */
+.container-app {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 1rem;
+}
+.scrollable-content {
+    max-height: 50vh;
+    overflow-y: auto;
+}
