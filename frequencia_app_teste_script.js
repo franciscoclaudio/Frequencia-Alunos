@@ -378,19 +378,24 @@ async function saveAttendance() {
  * Deleta a turma base do Firestore.
  */
 async function deleteClassBase(classId, className) {
-    if (!confirm(`Tem certeza que deseja EXCLUIR permanentemente a turma "${className}"? Isso também removerá todos os registros de frequência associados (se houver).`)) {
+    // Substituindo confirm() por showMessage() para rodar em IFrames/Canvas
+    const confirmation = window.prompt(`Confirme a exclusão: Digite o nome da turma ("${className}") para EXCLUIR permanentemente. Isso removerá a base de dados desta turma.`)
+    
+    if (confirmation !== className) {
+        if (confirmation !== null) {
+            showMessage("Atenção", "O nome digitado não corresponde. Exclusão cancelada.");
+        }
         return;
     }
-
+    
     try {
         // 1. Deleta o documento da turma base
         const classDocRef = doc(getClassesCollectionRef(), classId);
         await deleteDoc(classDocRef);
 
-        // 2. (OPCIONAL) Limpa todos os registros de frequência associados
-        // ATENÇÃO: Deletar coleções inteiras com um único comando é complexo no Firestore.
-        // Aqui, apenas deletamos a turma base e notificamos o usuário.
-        // A coleção 'attendance_records' pode conter registros 'pendurados' que o usuário deve limpar manualmente.
+        // 2. (OPCIONAL) O código não deleta os registros de frequência associados aqui,
+        // pois deletar subcoleções é complexo e lento. Apenas a base é removida.
+        // Os registros antigos ficarão "pendurados" (mas inacessíveis pelo app, exceto via exportação).
 
         showMessage("Sucesso", `Turma "${className}" excluída com sucesso!`);
         addClassModal.classList.add('hidden');
@@ -400,6 +405,7 @@ async function deleteClassBase(classId, className) {
         showMessage("Erro", `Não foi possível excluir a turma. Detalhes: ${error.message}`);
     }
 }
+
 
 /**
  * Exporta todos os dados (turmas e frequências) para um arquivo CSV.
