@@ -50,7 +50,7 @@ const saveClassBtn = document.getElementById('saveClassBtn');
 const deleteClassBtn = document.getElementById('deleteClassBtn');
 const openAddClassBtn = document.getElementById('openAddClassBtn');
 const openEditClassBtn = document.getElementById('openEditClassBtn');
-const openDeleteClassQuickBtn = document.getElementById('deleteClassQuickBtn'); // RENOMEADO AQUI
+const openDeleteClassQuickBtn = document.getElementById('deleteClassQuickBtn'); 
 const exportCSVBtn = document.getElementById('exportCSVBtn');
 
 // --- UTILIDADES ---
@@ -121,20 +121,30 @@ function showClassModal(isEditing = false, classData = null) {
         classNameInputEl.value = '';
         studentListInputEl.value = '';
         deleteClassBtn.classList.add('hidden');
-        currentClassId = null;
+        // Ao abrir o modal para ADICIONAR, não tocamos no currentClassId para não desativar o que estava selecionado
+        // Apenas o 'saveClass' ou a 'deleção' é que atualizarão o estado global
     }
     studentListFileEl.value = '';
     addClassModal.classList.remove('hidden');
     addClassModal.classList.add('flex');
 }
 
+/**
+ * Funcao alterada para garantir que a seleção da turma seja mantida/restaurada após fechar o modal.
+ */
 function hideClassModal() {
     addClassModal.classList.add('hidden');
     addClassModal.classList.remove('flex');
-    currentClassId = null;
+    
+    // Limpa os campos do modal
     classNameInputEl.value = '';
     studentListInputEl.value = '';
     studentListFileEl.value = '';
+
+    // Força o re-carregamento da turma atualmente selecionada no <select>
+    // Se a turma ativa no select for um ID válido, ela será re-ativada.
+    // Se for "-- Selecione uma Turma --" (valor vazio), ele chamará handleClassSelection("") e limpará o estado.
+    handleClassSelection(classesSelectEl.value);
 }
 
 function handleStudentListFile(event) {
@@ -214,13 +224,19 @@ async function saveClass() {
             createdAt: currentClassId ? currentClassData.createdAt : new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-        if (currentClassId) {
-            const classDocRef = doc(db, classesPath, currentClassId);
+        const classIdToSave = currentClassId || null; // Usa o ID atual se estiver editando
+
+        if (classIdToSave) {
+            const classDocRef = doc(db, classesPath, classIdToSave);
             await setDoc(classDocRef, classData);
             showMessage(`Turma "${className}" atualizada!`);
+            currentClassId = classIdToSave; // Mantém o ID ativo
         } else {
-            await addDoc(collection(db, classesPath), classData);
+            const newDocRef = await addDoc(collection(db, classesPath), classData);
             showMessage(`Turma "${className}" adicionada!`);
+            // Se for uma nova turma, define o ID atual para a recém-criada, assim ela é selecionada
+            currentClassId = newDocRef.id; 
+            classesSelectEl.value = newDocRef.id; // Garante que o select também aponte para ela
         }
         hideClassModal();
     } catch (error) {
@@ -250,12 +266,12 @@ async function deleteClass() {
         await deleteDoc(classDocRef);
 
         showMessage(`Turma excluída com sucesso!`);
-        hideClassModal();
+        
+        // Limpa o estado global, o select será atualizado pelo listener do Firestore
         currentClassId = null;
         currentClassData = null;
-        clearStudentList();
-        // classesSelectEl.value = ''; // LINHA REMOVIDA PARA MANTER O FOCO NO SELECIONADO ATÉ QUE updateClassSelects ATUALIZE
-
+        
+        hideClassModal(); // Vai chamar handleClassSelection("") e limpar a UI
     } catch (error) {
         console.error("Erro ao excluir turma:", error);
         showMessage("Erro ao excluir turma: " + error.message, 'error');
@@ -365,18 +381,18 @@ function updateClassSelects() {
         classesSelectEl.appendChild(option);
     });
 
-    // Tenta re-selecionar o ID da turma
-    if (currentClassId && currentClasses.some(c => c.id === currentClassId)) {
-        classesSelectEl.value = currentClassId;
-    } else if (previouslySelectedClassId && currentClasses.some(c => c.id === previouslySelectedClassId)) {
-        // Se a turma atual foi apagada, mas a anterior existe, usa a anterior (mais robusto)
-        classesSelectEl.value = previouslySelectedClassId;
-        currentClassId = previouslySelectedClassId;
-        currentClassData = currentClasses.find(c => c.id === previouslySelectedClassId);
-        // Chama o tratamento de seleção para re-carregar a lista/frequência
-        handleClassSelection(currentClassId);
+    // Lógica para re-selecionar o ID da turma após a atualização da lista
+    const newSelectionId = currentClassId || previouslySelectedClassId;
+    
+    if (newSelectionId && currentClasses.some(c => c.id === newSelectionId)) {
+        classesSelectEl.value = newSelectionId;
+        currentClassId = newSelectionId; // Garante que o estado global esteja alinhado
+        currentClassData = currentClasses.find(c => c.id === newSelectionId);
+        // Garante que a UI seja re-renderizada com a turma correta
+        handleClassSelection(newSelectionId); 
     } else {
-        // Se a turma não existe mais, limpa o estado
+        // Se a turma ativa/anterior não existe mais, reseta o select e o estado.
+        classesSelectEl.value = ""; 
         currentClassId = null;
         currentClassData = null;
         clearStudentList();
@@ -559,32 +575,37 @@ function exportAttendanceToCSV() {
 // --- FLUXO ---
 
 function handleClassSelection(classId) {
-    if (!classId) {
-        // Esconde os botões se nenhuma turma for selecionada
-        openEditClassBtn.classList.add('hidden'); 
-        openDeleteClassQuickBtn.classList.add('hidden');
+    // Se o valor for nulo ou vazio (que é o valor de "-- Selecione uma Turma --")
+    if (!classId || classId === "") {
+        currentClassId = null;
+        currentClassData = null;
+        clearStudentList(); // Limpa a lista, botões e estado
         return;
     }
+
     const selectedClass = currentClasses.find(c => c.id === classId);
     if (!selectedClass) {
         currentClassId = null;
         currentClassData = null;
         clearStudentList();
-        // Esconde os botões
         openEditClassBtn.classList.add('hidden');
         openDeleteClassQuickBtn.classList.add('hidden');
         return;
     }
+    
+    // Mantém a turma selecionada
     currentClassId = classId;
     currentClassData = selectedClass;
     
-    // NOVO: Mostra os botões de edição e exclusão rápida
+    // Mostra os botões de edição e exclusão rápida
     openEditClassBtn.classList.remove('hidden');
     openDeleteClassQuickBtn.classList.remove('hidden');
 
+    // Se houver uma data selecionada, carrega a frequência
     if (dateInputEl.value) {
         loadFrequencyForDate(currentClassId, dateInputEl.value);
     } else {
+        // Caso contrário, apenas renderiza a lista de alunos
         renderStudentList(currentClassData.students, {});
     }
 }
@@ -627,7 +648,7 @@ dateInputEl.addEventListener('change', (e) => handleDateChange(e.target.value));
 saveAttendanceBtn.addEventListener('click', registerFrequency);
 
 // LISTENERS ADICIONAIS:
-openDeleteClassQuickBtn.addEventListener('click', handleEditClassQuick); // USO DO NOVO NOME
+openDeleteClassQuickBtn.addEventListener('click', handleEditClassQuick); 
 exportCSVBtn.addEventListener('click', exportAttendanceToCSV);
 
 // Data padrão (hoje)
@@ -650,10 +671,6 @@ async function initializeAppAndAuth() {
                 appContentEl.classList.remove('hidden');
                 loadSavedLogo();
                 setupClassesListener();
-                // Carrega a frequência do dia atual por padrão após a inicialização
-                if (classesSelectEl.value) {
-                    handleClassSelection(classesSelectEl.value);
-                }
             } else {
                 userIdDisplayEl.textContent = `Usuário: Desconectado`;
                 showMessage('Erro de autenticação. Recarregue a página.', 'error');
