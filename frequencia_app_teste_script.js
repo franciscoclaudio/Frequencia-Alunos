@@ -60,6 +60,7 @@ const btnPeriodoMensal = document.getElementById('btnPeriodoMensal');
 const periodoSemanalConfig = document.getElementById('periodoSemanalConfig');
 const periodoMensalConfig = document.getElementById('periodoMensalConfig');
 const semanaInputEl = document.getElementById('semanaInput');
+const semanaDisplayEl = document.getElementById('semanaDisplay'); // NOVO: Elemento para mostrar o intervalo da semana formatado
 const mesInputEl = document.getElementById('mesInput');
 const btnGerarRelatorioFinal = document.getElementById('btnGerarRelatorioFinal');
 const relatorioResultadoEl = document.getElementById('relatorioResultado');
@@ -83,7 +84,103 @@ const deleteClassBtn = document.getElementById('deleteClassBtn');
 
 // --- UTILIDADES ---
 
+// Funções de manipulação e cálculo de datas para o relatório semanal (ISO 8601)
+
+/**
+ * Helper function to get the ISO week (YYYY-Www) of a date.
+ */
+function getISOWeek(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Calculates the start and end date (Monday to Sunday) for a given ISO week string (YYYY-Www).
+ * Returns { startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD', display: 'DD a DD MÊS YYYY, semana WW' }
+ */
+function getDateRangeOfWeek(isoWeekString) {
+    if (!isoWeekString || !isoWeekString.match(/^\d{4}-W\d{2}$/)) {
+        return { startDate: null, endDate: null, display: 'Selecione uma semana válida' };
+    }
+
+    const [yearStr, weekStr] = isoWeekString.split('-W');
+    const year = parseInt(yearStr, 10);
+    const week = parseInt(weekStr, 10);
+
+    // 1. Get the date of January 4th of the given year (which is always in week 1)
+    const jan4 = new Date(year, 0, 4);
+
+    // 2. Get the day of the week for Jan 4th (0 = Sunday, 1 = Monday, ..., 6 = Saturday).
+    // ISO standard: Monday is day 1. JS: Sunday is day 0.
+    let jan4Day = jan4.getDay(); // 0 to 6
+    let jan4ISOday = jan4Day === 0 ? 7 : jan4Day; // Convert JS day (0-6, Sun-Sat) to ISO day (1-7, Mon-Sun)
+
+    // 3. Calculate the date of the Monday of the first week of the year
+    const firstMonday = new Date(jan4);
+    firstMonday.setDate(jan4.getDate() + 1 - jan4ISOday);
+
+    // 4. Calculate the start date (Monday) of the target week
+    const targetMonday = new Date(firstMonday);
+    targetMonday.setDate(firstMonday.getDate() + (week - 1) * 7);
+
+    // 5. Calculate the end date (Sunday) of the target week
+    const targetSunday = new Date(targetMonday);
+    targetSunday.setDate(targetMonday.getDate() + 6);
+
+    // Helper to format date as YYYY-MM-DD
+    const formatISODate = (date) => date.toISOString().split('T')[0];
+
+    // Helper to format date as DD
+    const formatDay = (date) => date.getDate().toString().padStart(2, '0');
+
+    // Helper to format month name
+    const monthNames = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    const formatMonth = (date) => monthNames[date.getMonth()];
+
+    // Generate the desired display format
+    const startDay = formatDay(targetMonday);
+    const endDay = formatDay(targetSunday);
+    const startMonthName = formatMonth(targetMonday);
+    const endMonthName = formatMonth(targetSunday);
+    const displayYear = targetSunday.getFullYear();
+    const displayWeek = week.toString().padStart(2, '0');
+
+    let displayString;
+
+    // Verifica se a semana termina em um mês diferente do que começou
+    if (targetMonday.getMonth() === targetSunday.getMonth()) {
+        displayString = `${startDay} a ${endDay} ${startMonthName} ${displayYear}, semana ${displayWeek}`;
+    } else {
+        displayString = `${startDay} ${startMonthName} a ${endDay} ${endMonthName} ${displayYear}, semana ${displayWeek}`;
+    }
+
+
+    return {
+        startDate: formatISODate(targetMonday), // YYYY-MM-DD
+        endDate: formatISODate(targetSunday),   // YYYY-MM-DD
+        display: displayString
+    };
+}
+
+/**
+ * Atualiza o elemento semanaDisplayEl com o intervalo de datas formatado.
+ */
+function updateWeekDisplay() {
+    const isoWeekValue = semanaInputEl.value;
+    const weekRange = getDateRangeOfWeek(isoWeekValue);
+
+    if (semanaDisplayEl) {
+        semanaDisplayEl.textContent = weekRange.display;
+    }
+}
+// --- FIM - Funções de manipulação de datas
+
 function showMessage(message, type = 'success') {
+// ... (código showMessage mantido)
     messageTextEl.textContent = message;
     messageToast.classList.remove('bg-green-500', 'bg-red-500', 'bg-blue-500');
     if (type === 'error') {
@@ -103,6 +200,7 @@ function showMessage(message, type = 'success') {
 }
 
 function closeMessage() {
+// ... (código closeMessage mantido)
     messageToast.classList.add('opacity-0');
     setTimeout(() => {
         messageToast.classList.add('hidden');
@@ -111,6 +209,7 @@ function closeMessage() {
 }
 
 function handleLogoUpload(event) {
+// ... (código handleLogoUpload mantido)
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -127,6 +226,7 @@ function handleLogoUpload(event) {
 }
 
 function loadSavedLogo() {
+// ... (código loadSavedLogo mantido)
     try {
         const savedLogo = localStorage.getItem('customLogo');
         if (savedLogo) {
@@ -138,6 +238,7 @@ function loadSavedLogo() {
 }
 
 function showClassModal(isEditing = false, classData = null) {
+// ... (código showClassModal mantido)
     if (isEditing && classData) {
         modalTitleEl.textContent = `Editar: ${classData.name}`;
         classNameInputEl.value = classData.name || '';
@@ -159,6 +260,7 @@ function showClassModal(isEditing = false, classData = null) {
  * Funcao alterada para garantir que a seleção da turma seja mantida/restaurada após fechar o modal.
  */
 function hideClassModal() {
+// ... (código hideClassModal mantido)
     addClassModal.classList.add('hidden');
     addClassModal.classList.remove('flex');
 
@@ -172,6 +274,7 @@ function hideClassModal() {
 }
 
 function handleStudentListFile(event) {
+// ... (código handleStudentListFile mantido)
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -193,6 +296,7 @@ function handleStudentListFile(event) {
 // --- FIREBASE / FIRESTORE (Manter a lógica original) ---
 
 function getClassCollectionPath() {
+// ... (código getClassCollectionPath mantido)
     if (!userId) {
         console.error("UserID não definido.");
         return null;
@@ -201,6 +305,7 @@ function getClassCollectionPath() {
 }
 
 function getFrequencyCollectionPath(classId) {
+// ... (código getFrequencyCollectionPath mantido)
     if (!classId) {
         console.error("Class ID não definido para frequência.");
         return null;
@@ -209,6 +314,7 @@ function getFrequencyCollectionPath(classId) {
 }
 
 function setupClassesListener() {
+// ... (código setupClassesListener mantido)
     const classesPath = getClassCollectionPath();
     if (!classesPath) return;
     const classesCollectionRef = collection(db, classesPath);
@@ -226,6 +332,7 @@ function setupClassesListener() {
 }
 
 async function saveClass() {
+// ... (código saveClass mantido)
     const className = classNameInputEl.value.trim();
     const studentList = studentListInputEl.value.trim();
     if (!className || !studentList) {
@@ -273,6 +380,7 @@ async function saveClass() {
 }
 
 async function deleteClass() {
+// ... (código deleteClass mantido)
     if (!currentClassId) return;
     if (!window.confirm(`Excluir a turma "${classNameInputEl.value.trim()}" e todos os registros? IRREVERSÍVEL!`)) {
         return;
@@ -306,6 +414,7 @@ async function deleteClass() {
 }
 
 async function loadFrequencyForDate(classId, dateString) {
+// ... (código loadFrequencyForDate mantido)
     currentFrequencyDocId = null;
     saveAttendanceBtn.textContent = 'Salvar Frequência';
     saveAttendanceBtn.disabled = false;
@@ -344,6 +453,7 @@ async function loadFrequencyForDate(classId, dateString) {
  * Salva o registro de frequência incluindo critérios opcionais.
  */
 async function registerFrequency() {
+// ... (código registerFrequency mantido)
     if (!currentClassId || !dateInputEl.value) {
         showMessage("Selecione uma turma e uma data.", 'error');
         return;
@@ -400,6 +510,7 @@ async function registerFrequency() {
  * Controla a exibição das telas principais (Menu, Presença, Relatório).
  */
 function navigateTo(screenId) {
+// ... (código navigateTo mantido)
     menuInicialEl.classList.add('hidden');
     telaPresencaEl.classList.add('hidden');
     telaRelatorioEl.classList.add('hidden');
@@ -421,10 +532,13 @@ function navigateTo(screenId) {
         // Reseta o resultado do relatório ao entrar na tela
         relatorioResultadoEl.classList.add('hidden');
         relatorioConteudoEl.innerHTML = 'Preencha as configurações e clique em Gerar Relatório.';
+        // Garante que o display da semana esteja correto ao entrar na tela
+        updateWeekDisplay();
     }
 }
 
 function updateClassSelects() {
+// ... (código updateClassSelects mantido)
     // Tenta preservar a seleção atual
     const previouslySelectedClassId = classesSelectEl.value;
 
@@ -460,6 +574,7 @@ function updateClassSelects() {
 }
 
 function clearStudentList() {
+// ... (código clearStudentList mantido)
     studentsListContainerEl.innerHTML = `
         <p class="text-center text-gray-500 py-4">Selecione uma turma e data.</p>
     `;
@@ -475,6 +590,7 @@ function clearStudentList() {
  * Renderiza a lista de alunos incluindo os campos opcionais.
  */
 function renderStudentList(students, records) {
+// ... (código renderStudentList mantido)
     studentsListContainerEl.innerHTML = '';
     const listHtml = students.map((name, index) => {
         // A regra é: se o registro existir e 'present' for false, é Ausente. Caso contrário, é Presente.
@@ -546,6 +662,7 @@ function renderStudentList(students, records) {
 }
 
 window.handlePresenceChange = function(checkbox) {
+// ... (código handlePresenceChange mantido)
     const studentItem = checkbox.closest('.student-item');
     const isPresent = checkbox.checked;
     const switchBg = checkbox.nextElementSibling;
@@ -572,6 +689,7 @@ window.handlePresenceChange = function(checkbox) {
 }
 
 function exportAttendanceToCSV() {
+// ... (código exportAttendanceToCSV mantido)
     if (!currentClassId || !dateInputEl.value) {
         showMessage("Nenhuma frequência carregada para exportar.", 'error');
         return;
@@ -637,6 +755,7 @@ function exportAttendanceToCSV() {
 // --- LÓGICA DE NAVEGAÇÃO E SELEÇÃO DE TURMA ---
 
 function handleClassSelection(classId) {
+// ... (código handleClassSelection mantido)
     // Se o valor for nulo ou vazio (que é o valor de "-- Selecione uma Turma --")
     if (!classId || classId === "") {
         currentClassId = null;
@@ -685,6 +804,7 @@ function handleClassSelection(classId) {
 }
 
 function handleDateChange(dateString) {
+// ... (código handleDateChange mantido)
     if (!currentClassId) {
         showMessage("Selecione uma turma primeiro.", 'error');
         dateInputEl.value = '';
@@ -698,6 +818,7 @@ function handleDateChange(dateString) {
 }
 
 function handleEditClassQuick() {
+// ... (código handleEditClassQuick mantido)
     if (currentClassId && currentClassData) {
         // Abre o modal em modo de edição, com os dados da turma selecionada
         showClassModal(true, currentClassData);
@@ -709,6 +830,7 @@ function handleEditClassQuick() {
 // --- LÓGICA DA TELA DE RELATÓRIO ---
 
 function handlePeriodSelection(period) {
+// ... (código handlePeriodSelection mantido)
     selectedReportPeriod = period;
 
     btnPeriodoSemanal.classList.remove('bg-white', 'border-primary', 'text-primary', 'border-gray-300', 'text-gray-700');
@@ -735,7 +857,7 @@ async function generateReport() {
         return;
     }
 
-    let startDate, endDate, periodDisplay;
+    let startDate, endDate, periodDisplay, periodFileName;
 
     if (selectedReportPeriod === 'Semanal') {
         const weekValue = semanaInputEl.value;
@@ -743,15 +865,18 @@ async function generateReport() {
             showMessage("Selecione uma semana.", 'error');
             return;
         }
-        // Ex: 2024-W15. Precisa de uma lib ou lógica complexa para calcular datas.
-        // Simplificação: apenas usa o valor de input como display e mostra um aviso.
-        periodDisplay = `Semana: ${weekValue}`;
-        showMessage("Funcionalidade de cálculo de datas semanais não implementada. Gerando relatório simulado.", 'info');
 
-        // Para simulação, usaremos um período fixo
-        startDate = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0];
-        endDate = new Date().toISOString().split('T')[0];
+        const weekRange = getDateRangeOfWeek(weekValue);
+        startDate = weekRange.startDate;
+        endDate = weekRange.endDate;
+        periodDisplay = weekRange.display;
+        periodFileName = weekValue;
 
+        if (!startDate || !endDate) {
+            showMessage("Erro ao calcular o período da semana. Verifique a seleção.", 'error');
+            return;
+        }
+        
     } else { // Mensal
         const monthValue = mesInputEl.value;
         if (!monthValue) {
@@ -760,18 +885,21 @@ async function generateReport() {
         }
         const [year, month] = monthValue.split('-');
         startDate = `${year}-${month}-01`;
+        // Calcula o último dia do mês
         endDate = new Date(year, month, 0).toISOString().split('T')[0];
         periodDisplay = `Mês: ${monthValue}`;
+        periodFileName = monthValue;
     }
 
     const frequencyPath = getFrequencyCollectionPath(currentClassId);
     if (!frequencyPath) return;
 
     try {
-        // Simulação de carregamento de dados (na prática, precisaria de uma query de intervalo de datas)
+        // Busca TODOS os documentos de frequência da turma (para filtrar em memória)
         const q = query(collection(db, frequencyPath));
         const snapshot = await getDocs(q);
 
+        // Filtra os registros que estão dentro do intervalo de datas (incluso)
         const allRecords = snapshot.docs
             .map(doc => doc.data())
             .filter(data => data.date >= startDate && data.date <= endDate);
@@ -784,7 +912,7 @@ async function generateReport() {
             return;
         }
 
-        // Lógica de Agregação (SIMPLIFICADA)
+        // Lógica de Agregação
         const studentStats = {};
         currentClassData.students.forEach(name => {
             studentStats[name] = { totalAulas: 0, totalPresencas: 0, totalAtrasos: 0, totalConflitos: 0, totalParticipativos: 0 };
@@ -813,7 +941,7 @@ async function generateReport() {
         // Monta o HTML do Relatório
         let reportHtml = `
             <h4 class="text-lg font-semibold text-gray-800 mb-2">Turma: ${currentClassData.name}</h4>
-            <p class="text-sm text-gray-600 mb-4">Período: ${periodDisplay} (${startDate} a ${endDate})</p>
+            <p class="text-sm text-gray-600 mb-4">Período: ${periodDisplay}</p>
             <p class="text-sm text-gray-600 mb-4">Total de Aulas Registradas no Período: <span class="font-bold text-primary">${allRecords.length}</span></p>
             <div class="space-y-4">
         `;
@@ -854,30 +982,43 @@ function exportReportToCSV() {
         return;
     }
 
-    // Pega as estatísticas do relatório simulado (repetindo a lógica de agregação)
     let startDate, endDate, periodDisplay, periodFileName;
-    const allRecords = []; // Deveria ser preenchido pela generateReport, mas vamos simular de novo
 
     if (selectedReportPeriod === 'Semanal') {
         const weekValue = semanaInputEl.value;
-        periodDisplay = `Semana: ${weekValue}`;
+        if (!weekValue) {
+            showMessage("Selecione uma semana.", 'error');
+            return;
+        }
+
+        const weekRange = getDateRangeOfWeek(weekValue);
+        startDate = weekRange.startDate;
+        endDate = weekRange.endDate;
+        periodDisplay = weekRange.display;
         periodFileName = weekValue;
-        startDate = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0];
-        endDate = new Date().toISOString().split('T')[0];
+
+        if (!startDate || !endDate) {
+            showMessage("Erro ao calcular o período da semana para exportação.", 'error');
+            return;
+        }
 
     } else { // Mensal
         const monthValue = mesInputEl.value;
-        periodDisplay = `Mês: ${monthValue}`;
-        periodFileName = monthValue;
+        if (!monthValue) {
+            showMessage("Selecione um mês.", 'error');
+            return;
+        }
         const [year, month] = monthValue.split('-');
         startDate = `${year}-${month}-01`;
         endDate = new Date(year, month, 0).toISOString().split('T')[0];
+        periodDisplay = `Mês: ${monthValue}`;
+        periodFileName = monthValue;
     }
 
     const frequencyPath = getFrequencyCollectionPath(currentClassId);
     if (!frequencyPath) return;
 
-    // Repete a busca e agregação (idealmente, 'generateReport' retornaria os dados)
+    // Repete a busca e agregação
     getDocs(query(collection(db, frequencyPath))).then(snapshot => {
         const fetchedRecords = snapshot.docs
             .map(doc => doc.data())
@@ -910,7 +1051,7 @@ function exportReportToCSV() {
 
         // 1. Geração do CSV
         let csvContent = `Turma: ${currentClassData.name}\n`;
-        csvContent += `Período: ${periodDisplay} (${startDate} a ${endDate})\n`;
+        csvContent += `Período: ${periodDisplay}\n`;
         csvContent += `Total de Aulas Registradas: ${fetchedRecords.length}\n`;
         csvContent += "Nome;Total Aulas;Total Presenças;Percentual Frequência;Total Atrasos;Total Conflituoso;Total Participativo\n";
 
@@ -987,6 +1128,8 @@ btnVoltarMenuRelatorio.addEventListener('click', () => {
 });
 btnPeriodoSemanal.addEventListener('click', () => handlePeriodSelection('Semanal'));
 btnPeriodoMensal.addEventListener('click', () => handlePeriodSelection('Mensal'));
+// NOVO: Adiciona listener para a mudança do input de semana
+semanaInputEl.addEventListener('change', updateWeekDisplay);
 btnGerarRelatorioFinal.addEventListener('click', generateReport);
 exportRelatorioBtn.addEventListener('click', exportReportToCSV);
 
@@ -1001,7 +1144,11 @@ studentListFileEl.addEventListener('change', handleStudentListFile);
 // Data padrão (hoje) e período de relatório inicial
 const today = new Date().toISOString().split('T')[0];
 dateInputEl.value = today;
-handlePeriodSelection('Semanal'); // Configura o estado inicial do relatório
+
+// NOVO: Define a semana atual como padrão e exibe o intervalo
+const todayISOWeek = getISOWeek(new Date());
+semanaInputEl.value = todayISOWeek;
+handlePeriodSelection('Semanal'); // Configura o estado inicial do relatório (vai chamar updateWeekDisplay ao entrar na tela)
 
 // --- INICIALIZAÇÃO ---
 
@@ -1019,6 +1166,8 @@ async function initializeAppAndAuth() {
                 menuInicialEl.classList.remove('hidden'); // Exibe o menu principal
                 loadSavedLogo();
                 setupClassesListener();
+                // Chama updateWeekDisplay para exibir o valor inicial da semana
+                updateWeekDisplay();
             } else {
                 userIdDisplayEl.textContent = `Usuário: Desconectado`;
                 showMessage('Erro de autenticação. Recarregue a página.', 'error');
