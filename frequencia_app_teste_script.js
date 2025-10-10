@@ -1122,6 +1122,7 @@ openAddClassBtn.addEventListener('click', () => {
     currentClassId = null; 
     showClassModal(false);
 });
+openEditClassBtn.addEventListener('click', handleEditClassQuick); // <-- LINHA ADICIONADA: Corrige o botão de edição
 openDeleteClassQuickBtn.addEventListener('click', handleDeleteClassQuick); // Abre modal de edição para confirmar exclusão
 btnPreencherPresenca.addEventListener('click', () => navigateTo('presenca'));
 btnGerarRelatorio.addEventListener('click', () => navigateTo('relatorio'));
