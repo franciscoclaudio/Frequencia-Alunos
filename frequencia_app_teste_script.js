@@ -1,9 +1,11 @@
 // Importações do Firebase SDK v11 (JavaScript)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, getDoc, getDocs, deleteDoc, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, getDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// CONFIGURAÇÃO FIREBASE
+// ========================================
+// CONFIGURAÇÃO FIREBASE (SUAS CREDENCIAIS)
+// ========================================
 const firebaseConfig = {
     apiKey: "AIzaSyDo6uA_fJGbKqLfj9kwUu1JSkC34HGlWk0",
     authDomain: "registrar-frenquencia.firebaseapp.com",
@@ -13,22 +15,23 @@ const firebaseConfig = {
     appId: "1:571143130821:web:812eb820306f6b0338eaac"
 };
 
-let app, db, auth, userId = null;
+// --- VARIÁVEIS GLOBAIS FIREBASE E ESTADO DA APLICAÇÃO ---
+let app;
+let db;
+let auth;
+let userId = null;
 let currentClasses = [];
 let currentClassId = null;
 let currentClassData = null;
 let currentFrequencyDocId = null;
-let periodoRelatorio = 'semanal';
 
-// ELEMENTOS DO DOM
+// --- ELEMENTOS DO DOM ---
 const loadingEl = document.getElementById('loadingIndicator');
-const menuInicialEl = document.getElementById('menuInicial');
-const telaPresencaEl = document.getElementById('telaPresenca');
-const telaRelatorioEl = document.getElementById('telaRelatorio');
+const appContentEl = document.getElementById('appContent');
 const userIdDisplayEl = document.getElementById('userIdDisplay');
 const logoImg = document.getElementById('logoImg');
 const logoUploadInput = document.getElementById('logoUpload');
-const classesSelectMenuEl = document.getElementById('classesSelectMenu');
+const classesSelectEl = document.getElementById('classesSelect');
 const studentsListContainerEl = document.getElementById('studentsListContainer');
 const dateInputEl = document.getElementById('dateInput');
 const dateDisplayEl = document.getElementById('dateDisplay');
@@ -45,40 +48,38 @@ const studentListFileEl = document.getElementById('studentListFile');
 const cancelAddClassBtn = document.getElementById('cancelAddClassBtn');
 const saveClassBtn = document.getElementById('saveClassBtn');
 const deleteClassBtn = document.getElementById('deleteClassBtn');
-const openAddClassBtnMenu = document.getElementById('openAddClassBtnMenu');
-const openEditClassBtnMenu = document.getElementById('openEditClassBtnMenu');
-const deleteClassQuickBtnMenu = document.getElementById('deleteClassQuickBtnMenu');
+const openAddClassBtn = document.getElementById('openAddClassBtn');
+const openEditClassBtn = document.getElementById('openEditClassBtn');
+const openDeleteClassQuickBtn = document.getElementById('deleteClassQuickBtn'); 
 const exportCSVBtn = document.getElementById('exportCSVBtn');
-const btnPreencherPresenca = document.getElementById('btnPreencherPresenca');
-const btnGerarRelatorio = document.getElementById('btnGerarRelatorio');
-const btnVoltarMenu = document.getElementById('btnVoltarMenu');
-const btnVoltarMenuRelatorio = document.getElementById('btnVoltarMenuRelatorio');
-const btnPeriodoSemanal = document.getElementById('btnPeriodoSemanal');
-const btnPeriodoMensal = document.getElementById('btnPeriodoMensal');
-const periodoSemanalConfig = document.getElementById('periodoSemanalConfig');
-const periodoMensalConfig = document.getElementById('periodoMensalConfig');
-const semanaInput = document.getElementById('semanaInput');
-const mesInput = document.getElementById('mesInput');
-const btnGerarRelatorioFinal = document.getElementById('btnGerarRelatorioFinal');
-const relatorioResultado = document.getElementById('relatorioResultado');
-const relatorioConteudo = document.getElementById('relatorioConteudo');
-const exportRelatorioBtn = document.getElementById('exportRelatorioBtn');
 
-// UTILIDADES
+// --- UTILIDADES ---
+
 function showMessage(message, type = 'success') {
     messageTextEl.textContent = message;
     messageToast.classList.remove('bg-green-500', 'bg-red-500', 'bg-blue-500');
-    if (type === 'error') messageToast.classList.add('bg-red-500');
-    else if (type === 'info') messageToast.classList.add('bg-blue-500');
-    else messageToast.classList.add('bg-green-500');
+    if (type === 'error') {
+        messageToast.classList.add('bg-red-500');
+    } else if (type === 'info') {
+        messageToast.classList.add('bg-blue-500');
+    } else {
+        messageToast.classList.add('bg-green-500');
+    }
     messageToast.classList.remove('hidden');
-    messageToast.classList.add('flex', 'opacity-100');
-    setTimeout(() => closeMessage(), 4000);
+    messageToast.classList.add('flex');
+    messageToast.classList.remove('opacity-0');
+    messageToast.classList.add('opacity-100');
+    setTimeout(() => {
+        closeMessage();
+    }, 4000);
 }
 
 function closeMessage() {
     messageToast.classList.add('opacity-0');
-    setTimeout(() => messageToast.classList.add('hidden'), 300);
+    setTimeout(() => {
+        messageToast.classList.add('hidden');
+        messageToast.classList.remove('flex');
+    }, 300);
 }
 
 function handleLogoUpload(event) {
@@ -87,9 +88,25 @@ function handleLogoUpload(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         logoImg.src = e.target.result;
-        showMessage('Logo atualizada!', 'info');
+        try {
+            localStorage.setItem('customLogo', e.target.result);
+            showMessage('Logo atualizada!', 'info');
+        } catch (err) {
+            console.warn('Não foi possível salvar logo:', err);
+        }
     };
     reader.readAsDataURL(file);
+}
+
+function loadSavedLogo() {
+    try {
+        const savedLogo = localStorage.getItem('customLogo');
+        if (savedLogo) {
+            logoImg.src = savedLogo;
+        }
+    } catch (err) {
+        console.warn('Não foi possível carregar logo salva:', err);
+    }
 }
 
 function showClassModal(isEditing = false, classData = null) {
@@ -104,18 +121,30 @@ function showClassModal(isEditing = false, classData = null) {
         classNameInputEl.value = '';
         studentListInputEl.value = '';
         deleteClassBtn.classList.add('hidden');
+        // Ao abrir o modal para ADICIONAR, não tocamos no currentClassId para não desativar o que estava selecionado
+        // Apenas o 'saveClass' ou a 'deleção' é que atualizarão o estado global
     }
     studentListFileEl.value = '';
     addClassModal.classList.remove('hidden');
     addClassModal.classList.add('flex');
 }
 
+/**
+ * Funcao alterada para garantir que a seleção da turma seja mantida/restaurada após fechar o modal.
+ */
 function hideClassModal() {
     addClassModal.classList.add('hidden');
+    addClassModal.classList.remove('flex');
+    
+    // Limpa os campos do modal
     classNameInputEl.value = '';
     studentListInputEl.value = '';
     studentListFileEl.value = '';
-    handleClassSelectionMenu(classesSelectMenuEl.value);
+
+    // Força o re-carregamento da turma atualmente selecionada no <select>
+    // Se a turma ativa no select for um ID válido, ela será re-ativada.
+    // Se for "-- Selecione uma Turma --" (valor vazio), ele chamará handleClassSelection("") e limpará o estado.
+    handleClassSelection(classesSelectEl.value);
 }
 
 function handleStudentListFile(event) {
@@ -123,35 +152,51 @@ function handleStudentListFile(event) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
-        const names = e.target.result.split(/\r?\n/).map(n => n.trim()).filter(n => n.length > 0);
+        const fileContent = e.target.result;
+        const names = fileContent.split(/\r?\n/)
+            .map(name => name.trim())
+            .filter(name => name.length > 0);
         studentListInputEl.value = names.join('\n');
         if (!classNameInputEl.value.trim()) {
-            classNameInputEl.value = file.name.replace(/\.txt$/i, '');
+            const fileName = file.name.replace(/\.txt$/i, '');
+            classNameInputEl.value = fileName;
         }
         showMessage(`${names.length} alunos carregados do arquivo`, 'info');
     };
     reader.readAsText(file);
 }
 
-// FIREBASE / FIRESTORE
+// --- FIREBASE / FIRESTORE ---
+
 function getClassCollectionPath() {
-    return userId ? `users/${userId}/classes` : null;
+    if (!userId) {
+        console.error("UserID não definido.");
+        return null;
+    }
+    return `users/${userId}/classes`;
 }
 
 function getFrequencyCollectionPath(classId) {
-    return classId ? `${getClassCollectionPath()}/${classId}/frequency_records` : null;
+    if (!classId) {
+        console.error("Class ID não definido para frequência.");
+        return null;
+    }
+    return `${getClassCollectionPath()}/${classId}/frequency_records`;
 }
 
 function setupClassesListener() {
     const classesPath = getClassCollectionPath();
     if (!classesPath) return;
-    const q = query(collection(db, classesPath));
+    const classesCollectionRef = collection(db, classesPath);
+    const q = query(classesCollectionRef);
     onSnapshot(q, (snapshot) => {
         currentClasses = [];
-        snapshot.forEach((doc) => currentClasses.push({ id: doc.id, ...doc.data() }));
+        snapshot.forEach((doc) => {
+            currentClasses.push({ id: doc.id, ...doc.data() });
+        });
         updateClassSelects();
     }, (error) => {
-        console.error("Erro ao ouvir turmas:", error);
+        console.error("Erro ao ouvir a coleção de Turmas:", error);
         showMessage("Erro ao carregar turmas: " + error.message, 'error');
     });
 }
@@ -163,7 +208,9 @@ async function saveClass() {
         showMessage("Preencha o nome da turma e a lista de alunos.", 'error');
         return;
     }
-    const students = studentList.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+    const students = studentList.split('\n')
+        .map(name => name.trim())
+        .filter(name => name.length > 0);
     if (students.length === 0) {
         showMessage("A lista de alunos não pode estar vazia.", 'error');
         return;
@@ -177,14 +224,19 @@ async function saveClass() {
             createdAt: currentClassId ? currentClassData.createdAt : new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-        if (currentClassId) {
-            await setDoc(doc(db, classesPath, currentClassId), classData);
+        const classIdToSave = currentClassId || null; // Usa o ID atual se estiver editando
+
+        if (classIdToSave) {
+            const classDocRef = doc(db, classesPath, classIdToSave);
+            await setDoc(classDocRef, classData);
             showMessage(`Turma "${className}" atualizada!`);
+            currentClassId = classIdToSave; // Mantém o ID ativo
         } else {
             const newDocRef = await addDoc(collection(db, classesPath), classData);
             showMessage(`Turma "${className}" adicionada!`);
-            currentClassId = newDocRef.id;
-            classesSelectMenuEl.value = newDocRef.id;
+            // Se for uma nova turma, define o ID atual para a recém-criada, assim ela é selecionada
+            currentClassId = newDocRef.id; 
+            classesSelectEl.value = newDocRef.id; // Garante que o select também aponte para ela
         }
         hideClassModal();
     } catch (error) {
@@ -195,18 +247,31 @@ async function saveClass() {
 
 async function deleteClass() {
     if (!currentClassId) return;
-    if (!confirm(`Excluir a turma "${classNameInputEl.value.trim()}" e todos os registros? IRREVERSÍVEL!`)) return;
+    if (!window.confirm(`Excluir a turma "${classNameInputEl.value.trim()}" e todos os registros? IRREVERSÍVEL!`)) {
+        return;
+    }
     const classesPath = getClassCollectionPath();
     if (!classesPath) return;
     try {
         const frequencyPath = getFrequencyCollectionPath(currentClassId);
-        const snapshot = await getDocs(query(collection(db, frequencyPath)));
-        await Promise.all(snapshot.docs.map(d => deleteDoc(doc(db, frequencyPath, d.id))));
-        await deleteDoc(doc(db, classesPath, currentClassId));
+        const q = query(collection(db, frequencyPath));
+        const snapshot = await getDocs(q);
+
+        const deletePromises = snapshot.docs.map(docToDelete =>
+            deleteDoc(doc(db, frequencyPath, docToDelete.id))
+        );
+        await Promise.all(deletePromises);
+
+        const classDocRef = doc(db, classesPath, currentClassId);
+        await deleteDoc(classDocRef);
+
         showMessage(`Turma excluída com sucesso!`);
+        
+        // Limpa o estado global, o select será atualizado pelo listener do Firestore
         currentClassId = null;
         currentClassData = null;
-        hideClassModal();
+        
+        hideClassModal(); // Vai chamar handleClassSelection("") e limpar a UI
     } catch (error) {
         console.error("Erro ao excluir turma:", error);
         showMessage("Erro ao excluir turma: " + error.message, 'error');
@@ -248,20 +313,378 @@ async function loadFrequencyForDate(classId, dateString) {
     }
 }
 
+/**
+ * Salva o registro de frequência incluindo critérios opcionais.
+ */
 async function registerFrequency() {
     if (!currentClassId || !dateInputEl.value) {
         showMessage("Selecione uma turma e uma data.", 'error');
         return;
     }
+
     const dateString = dateInputEl.value;
     const frequencyPath = getFrequencyCollectionPath(currentClassId);
     if (!frequencyPath) return;
+
     const records = {};
     const studentItems = studentsListContainerEl.querySelectorAll('.student-item');
+
     studentItems.forEach(item => {
         const name = item.dataset.studentName;
         const presenceCheckbox = item.querySelector('.presence-checkbox');
+        // Novos critérios opcionais
         const pontualidade = item.querySelector('.pontualidade-select')?.value || "não observado";
         const harmonia = item.querySelector('.harmonia-select')?.value || "não observado";
         const participacao = item.querySelector('.participacao-select')?.value || "não observado";
+
         records[name] = {
+            present: presenceCheckbox.checked,
+            // Usa os valores padronizados na leitura do DOM.
+            pontualidade: pontualidade,
+            harmonia: harmonia,
+            participacao: participacao
+        };
+    });
+
+    const frequencyData = {
+        classId: currentClassId,
+        date: dateString,
+        records: records,
+        updatedAt: new Date().toISOString()
+    };
+
+    try {
+        const frequencyDocRef = doc(db, frequencyPath, dateString);
+        await setDoc(frequencyDocRef, frequencyData);
+
+        currentFrequencyDocId = dateString;
+        saveAttendanceBtn.textContent = 'Atualizar Frequência';
+        showMessage(`Frequência salva para ${dateString}!`);
+
+    } catch (error) {
+        console.error("Erro ao registrar frequência:", error);
+        showMessage("Erro ao salvar: " + error.message, 'error');
+    }
+}
+
+// --- RENDERIZAÇÃO E UI ---
+
+function updateClassSelects() {
+    // Tenta preservar a seleção atual
+    const previouslySelectedClassId = classesSelectEl.value; 
+
+    classesSelectEl.innerHTML = '<option value="" disabled selected>-- Selecione uma Turma --</option>';
+    currentClasses.forEach(classData => {
+        const option = document.createElement('option');
+        option.value = classData.id;
+        option.textContent = `${classData.name} (${classData.students.length} alunos)`;
+        classesSelectEl.appendChild(option);
+    });
+
+    // Lógica para re-selecionar o ID da turma após a atualização da lista
+    const newSelectionId = currentClassId || previouslySelectedClassId;
+    
+    if (newSelectionId && currentClasses.some(c => c.id === newSelectionId)) {
+        classesSelectEl.value = newSelectionId;
+        currentClassId = newSelectionId; // Garante que o estado global esteja alinhado
+        currentClassData = currentClasses.find(c => c.id === newSelectionId);
+        // Garante que a UI seja re-renderizada com a turma correta
+        handleClassSelection(newSelectionId); 
+    } else {
+        // Se a turma ativa/anterior não existe mais, reseta o select e o estado.
+        classesSelectEl.value = ""; 
+        currentClassId = null;
+        currentClassData = null;
+        clearStudentList();
+    }
+}
+
+function clearStudentList() {
+    studentsListContainerEl.innerHTML = `
+        <p class="text-center text-gray-500 py-4">Selecione uma turma e data.</p>
+    `;
+    currentClassTitleEl.textContent = 'Selecione uma turma acima';
+    dateDisplayEl.textContent = '';
+    saveAttendanceBtn.disabled = true;
+    exportCSVBtn.disabled = true;
+    openEditClassBtn.classList.add('hidden');
+    openDeleteClassQuickBtn.classList.add('hidden');
+}
+
+/**
+ * Renderiza a lista de alunos incluindo os campos opcionais.
+ */
+function renderStudentList(students, records) {
+    studentsListContainerEl.innerHTML = '';
+    const listHtml = students.map((name, index) => {
+        const record = records[name] || { present: true };
+        const isPresent = record.present;
+        const indexDisplay = index + 1;
+        const studentRowClasses = isPresent ? 'bg-white' : 'bg-red-50';
+        const switchBgColor = isPresent ? 'bg-primary' : 'bg-gray-200';
+        const switchTranslate = isPresent ? 'translate-x-6' : 'translate-x-1';
+
+        // Critérios opcionais: valor salvo ou vazio
+        // O valor padrão do select é "", que corresponde a "Não Observado"
+        const pontualidadeValue = record.pontualidade && record.pontualidade !== "não observado" ? record.pontualidade : "";
+        const harmoniaValue = record.harmonia && record.harmonia !== "não observado" ? record.harmonia : "";
+        const participacaoValue = record.participacao && record.participacao !== "não observado" ? record.participacao : "";
+
+        return `
+            <li data-student-name="${name}" class="student-item ${studentRowClasses} p-3 rounded-lg transition-colors duration-300 border-b border-gray-100 last:border-0">
+                <div class="flex items-center justify-between">
+                    <span class="text-base font-medium text-gray-900 truncate pr-4">
+                        ${indexDisplay}. ${name}
+                    </span>
+                    <label class="flex items-center cursor-pointer flex-shrink-0">
+                        <span class="mr-2 text-sm font-medium text-gray-700 min-w-[60px] text-right">${isPresent ? 'Presente' : 'Ausente'}</span>
+                        <div class="relative">
+                            <input type="checkbox" 
+                                class="sr-only presence-checkbox" 
+                                ${isPresent ? 'checked' : ''} 
+                                onchange="handlePresenceChange(this)">
+                            <div class="block ${switchBgColor} w-14 h-8 rounded-full transition duration-300"></div>
+                            <div class="dot absolute left-0.5 top-0.5 bg-white w-7 h-7 rounded-full shadow-lg transform ${switchTranslate} transition duration-300"></div>
+                        </div>
+                    </label>
+                </div>
+                <div class="flex flex-col md:flex-row gap-2 mt-2">
+                    <label class="text-xs text-gray-700 font-medium">
+                        Pontualidade:
+                        <select class="pontualidade-select border rounded px-1 py-0.5">
+                            <option value="" ${pontualidadeValue === "" ? 'selected' : ''}>Não Observado</option>
+                            <option value="pontual" ${pontualidadeValue === "pontual" ? 'selected' : ''}>Pontual</option>
+                            <option value="atrasado" ${pontualidadeValue === "atrasado" ? 'selected' : ''}>Atrasado</option>
+                        </select>
+                    </label>
+                    <label class="text-xs text-gray-700 font-medium">
+                        Harmonia:
+                        <select class="harmonia-select border rounded px-1 py-0.5">
+                            <option value="" ${harmoniaValue === "" ? 'selected' : ''}>Não Observado</option>
+                            <option value="harmonioso" ${harmoniaValue === "harmonioso" ? 'selected' : ''}>Harmonioso</option>
+                            <option value="conflituoso" ${harmoniaValue === "conflituoso" ? 'selected' : ''}>Conflituoso</option>
+                        </select>
+                    </label>
+                    <label class="text-xs text-gray-700 font-medium">
+                        Participação:
+                        <select class="participacao-select border rounded px-1 py-0.5">
+                            <option value="" ${participacaoValue === "" ? 'selected' : ''}>Não Observado</option>
+                            <option value="participativo" ${participacaoValue === "participativo" ? 'selected' : ''}>Participativo</option>
+                            <option value="pouco participativo" ${participacaoValue === "pouco participativo" ? 'selected' : ''}>Pouco participativo</option>
+                        </select>
+                    </label>
+                </div>
+            </li>
+        `;
+    }).join('');
+
+    studentsListContainerEl.innerHTML = `<ul class="space-y-1">${listHtml}</ul>`;
+    currentClassTitleEl.textContent = currentClassData.name;
+    dateDisplayEl.textContent = dateInputEl.value ? `Data: ${new Date(dateInputEl.value + 'T00:00:00').toLocaleDateString('pt-BR')}` : '';
+    saveAttendanceBtn.disabled = false;
+    exportCSVBtn.disabled = false;
+}
+
+window.handlePresenceChange = function(checkbox) {
+    const studentItem = checkbox.closest('.student-item');
+    const isPresent = checkbox.checked;
+    const switchBg = checkbox.nextElementSibling;
+    const switchDot = switchBg.nextElementSibling;
+    const label = checkbox.closest('label').querySelector('span');
+
+    if (isPresent) {
+        studentItem.classList.remove('bg-red-50');
+        studentItem.classList.add('bg-white');
+        label.textContent = 'Presente';
+        switchBg.classList.remove('bg-gray-200');
+        switchBg.classList.add('bg-primary');
+        switchDot.classList.add('translate-x-6');
+        switchDot.classList.remove('translate-x-1');
+    } else {
+        studentItem.classList.remove('bg-white');
+        studentItem.classList.add('bg-red-50');
+        label.textContent = 'Ausente';
+        switchBg.classList.remove('bg-primary');
+        switchBg.classList.add('bg-gray-200');
+        switchDot.classList.remove('translate-x-6');
+        switchDot.classList.add('translate-x-1');
+    }
+}
+
+function exportAttendanceToCSV() {
+    if (!currentClassId || !dateInputEl.value) {
+        showMessage("Nenhuma frequência carregada para exportar.", 'error');
+        return;
+    }
+
+    const dateString = dateInputEl.value;
+    const className = currentClassData.name;
+    const studentItems = studentsListContainerEl.querySelectorAll('.student-item');
+
+    // NOVAS LINHAS: Nome da Turma e Data no topo do arquivo
+    let csvContent = `Turma: ${className}\n`;
+    csvContent += `Data: ${dateString}\n`;
+
+    // 1. Cabeçalho das Colunas
+    csvContent += "Nome;Presente;Pontualidade;Harmonia;Participação\n";
+
+    // 2. Linhas de dados
+    studentItems.forEach(item => {
+        const name = item.dataset.studentName;
+        const presenceCheckbox = item.querySelector('.presence-checkbox');
+        const isPresent = presenceCheckbox.checked ? "SIM" : "NÃO";
+        
+        // Critérios
+        // O valor padrão do select é "" (Não Observado), que tratamos como "Não Observado" no CSV
+        const pontualidade = item.querySelector('.pontualidade-select')?.value || "";
+        const harmonia = item.querySelector('.harmonia-select')?.value || "";
+        const participacao = item.querySelector('.participacao-select')?.value || "";
+
+        // Mapeia o valor "" para a string "Não Observado" para o CSV
+        const getDisplayValue = (value) => value === "" ? "Não Observado" : value.charAt(0).toUpperCase() + value.slice(1);
+        
+        // Formato CSV com separador ';'
+        const row = [
+            `"${name}"`, // Envolve o nome em aspas para evitar problemas
+            isPresent,
+            getDisplayValue(pontualidade),
+            getDisplayValue(harmonia),
+            getDisplayValue(participacao)
+        ].join(';');
+        
+        csvContent += row + "\n";
+    });
+
+    // 3. Criação e Download do arquivo
+    const filename = `${className}_Frequencia_${dateString}.csv`;
+    // Adiciona o charset utf-8 com BOM (Byte Order Mark) para garantir caracteres especiais (acentos) corretos no Excel
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) { // Browser support
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showMessage(`Exportação para CSV de "${className}" concluída!`);
+    } else {
+        showMessage("Seu navegador não suporta download de arquivos.", 'error');
+    }
+}
+
+
+// --- FLUXO ---
+
+function handleClassSelection(classId) {
+    // Se o valor for nulo ou vazio (que é o valor de "-- Selecione uma Turma --")
+    if (!classId || classId === "") {
+        currentClassId = null;
+        currentClassData = null;
+        clearStudentList(); // Limpa a lista, botões e estado
+        return;
+    }
+
+    const selectedClass = currentClasses.find(c => c.id === classId);
+    if (!selectedClass) {
+        currentClassId = null;
+        currentClassData = null;
+        clearStudentList();
+        openEditClassBtn.classList.add('hidden');
+        openDeleteClassQuickBtn.classList.add('hidden');
+        return;
+    }
+    
+    // Mantém a turma selecionada
+    currentClassId = classId;
+    currentClassData = selectedClass;
+    
+    // Mostra os botões de edição e exclusão rápida
+    openEditClassBtn.classList.remove('hidden');
+    openDeleteClassQuickBtn.classList.remove('hidden');
+
+    // Se houver uma data selecionada, carrega a frequência
+    if (dateInputEl.value) {
+        loadFrequencyForDate(currentClassId, dateInputEl.value);
+    } else {
+        // Caso contrário, apenas renderiza a lista de alunos
+        renderStudentList(currentClassData.students, {});
+    }
+}
+
+function handleDateChange(dateString) {
+    if (!currentClassId) {
+        showMessage("Selecione uma turma primeiro.", 'error');
+        dateInputEl.value = '';
+        return;
+    }
+    if (dateString) {
+        loadFrequencyForDate(currentClassId, dateString);
+    } else {
+        renderStudentList(currentClassData.students, {});
+    }
+}
+
+function handleEditClassQuick() {
+    if (currentClassId && currentClassData) {
+        // Abre o modal em modo de edição, com os dados da turma selecionada
+        showClassModal(true, currentClassData);
+    } else {
+        showMessage("Selecione uma turma para editar.", 'error');
+    }
+}
+
+// --- EVENTOS ---
+
+closeMessageBtn.addEventListener('click', closeMessage);
+logoUploadInput.addEventListener('change', handleLogoUpload);
+openAddClassBtn.addEventListener('click', () => showClassModal(false));
+openEditClassBtn.addEventListener('click', handleEditClassQuick); 
+
+cancelAddClassBtn.addEventListener('click', hideClassModal);
+saveClassBtn.addEventListener('click', saveClass);
+deleteClassBtn.addEventListener('click', deleteClass);
+studentListFileEl.addEventListener('change', handleStudentListFile);
+classesSelectEl.addEventListener('change', (e) => handleClassSelection(e.target.value));
+dateInputEl.addEventListener('change', (e) => handleDateChange(e.target.value));
+saveAttendanceBtn.addEventListener('click', registerFrequency);
+
+// LISTENERS ADICIONAIS:
+openDeleteClassQuickBtn.addEventListener('click', handleEditClassQuick); 
+exportCSVBtn.addEventListener('click', exportAttendanceToCSV);
+
+// Data padrão (hoje)
+const today = new Date().toISOString().split('T')[0];
+dateInputEl.value = today;
+
+// --- INICIALIZAÇÃO ---
+
+async function initializeAppAndAuth() {
+    try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        await signInAnonymously(auth);
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdDisplayEl.textContent = `Usuário: ${userId.substring(0, 8)}...`;
+                loadingEl.classList.add('hidden');
+                appContentEl.classList.remove('hidden');
+                loadSavedLogo();
+                setupClassesListener();
+            } else {
+                userIdDisplayEl.textContent = `Usuário: Desconectado`;
+                showMessage('Erro de autenticação. Recarregue a página.', 'error');
+            }
+        });
+    } catch (error) {
+        console.error("❌ Erro durante a inicialização:", error);
+        loadingEl.innerHTML = `<p class="text-red-600 text-center font-medium">Erro: ${error.message}</p>`;
+        showMessage('Erro ao conectar ao Firebase: ' + error.message, 'error');
+    }
+}
+
+initializeAppAndAuth();
