@@ -1122,10 +1122,6 @@ window.handlePresenceChange = function(checkbox) {
     }
 }
 
-// ========================================
-// EXPORTAÇÃO CSV
-// ========================================
-
 function exportAttendanceToCSV() {
     if (!currentClassId || !dateInputEl.value) {
         showMessage("Nenhuma frequência carregada para exportar.", 'error');
@@ -1141,4 +1137,41 @@ function exportAttendanceToCSV() {
     csvContent += "Nome;Presente;Pontualidade;Harmonia;Participação\n";
 
     studentItems.forEach(item => {
-        const name = item.dataset.studentName
+        const name = item.dataset.studentName;
+        const presenceCheckbox = item.querySelector('.presence-checkbox');
+        const isPresent = presenceCheckbox.checked ? "SIM" : "NÃO";
+
+        const pontualidade = item.querySelector('.pontualidade-select')?.value || "";
+        const harmonia = item.querySelector('.harmonia-select')?.value || "";
+        const participacao = item.querySelector('.participacao-select')?.value || "";
+
+        const getDisplayValue = (value) => value === "" ? "Não Observado" : value.charAt(0).toUpperCase() + value.slice(1);
+
+        const row = [
+            `"${name}"`,
+            isPresent,
+            getDisplayValue(pontualidade),
+            getDisplayValue(harmonia),
+            getDisplayValue(participacao)
+        ].join(';');
+
+        csvContent += row + "\n";
+    });
+
+    const filename = `${className}_Frequencia_${dateString}.csv`;
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showMessage(`Exportação para CSV de "${className}" concluída!`);
+    } else {
+        showMessage("Seu navegador não suporta download de arquivos.", 'error');
+    }
+}
