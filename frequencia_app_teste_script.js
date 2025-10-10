@@ -1103,8 +1103,11 @@ logoUploadInput.addEventListener('change', handleLogoUpload);
 
 // Eventos de Menu
 classesSelectEl.addEventListener('change', (e) => handleClassSelection(e.target.value));
-openAddClassBtn.addEventListener('click', () => { currentClassId = null; showClassModal(false); });
-openEditClassBtn.addEventListener('click', handleEditClassQuick);
+openAddClassBtn.addEventListener('click', () => { 
+    // Garante que o ID seja nulo para forçar a função saveClass() a ADICIONAR uma nova turma (addDoc)
+    currentClassId = null; 
+    showClassModal(false);
+});
 openDeleteClassQuickBtn.addEventListener('click', handleEditClassQuick); // Abre modal de edição para confirmar exclusão
 btnPreencherPresenca.addEventListener('click', () => navigateTo('presenca'));
 btnGerarRelatorio.addEventListener('click', () => navigateTo('relatorio'));
