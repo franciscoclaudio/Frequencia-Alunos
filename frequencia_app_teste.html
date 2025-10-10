@@ -15,7 +15,6 @@
                     },
                     colors: {
                         'primary': '#4f46e5',
-                        // COR SECUNDÁRIA ALTERADA DE LARANJA PARA VERDE
                         'secondary': '#10b981', 
                     }
                 }
@@ -36,7 +35,7 @@
                         <input type="file" id="logoUpload" accept="image/*" class="hidden">
                     </div>
                     <div class="flex-grow">
-                        <h1 class="text-3xl font-bold text-primary">Controle de Frequência</h1>
+                        <h1 class="text-3xl font-bold text-primary">Controle de Frequência</h1>
                         <p id="userIdDisplay" class="text-sm text-gray-500 mt-1">Carregando usuário...</p>
                     </div>
                 </div>
@@ -46,36 +45,69 @@
                 <p class="text-xl text-primary font-medium">Conectando ao Firebase...</p>
             </div>
 
-            <div id="appContent" class="hidden space-y-6">
+            <!-- MENU INICIAL -->
+            <div id="menuInicial" class="hidden space-y-6">
                 <div class="p-4 bg-primary/10 rounded-lg border border-primary/20 shadow-inner">
-                    <h2 class="text-xl font-semibold text-primary mb-3">Selecione a Turma e Data</h2>
+                    <h2 class="text-xl font-semibold text-primary mb-3">Selecione a Turma</h2>
                     <div class="mb-4">
-                        <label for="classesSelect" class="block text-sm font-medium text-gray-700 mb-1">Turma:</label>
-                        <select id="classesSelect" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-secondary focus:border-secondary transition duration-150">
+                        <label for="classesSelectMenu" class="block text-sm font-medium text-gray-700 mb-1">Turma:</label>
+                        <select id="classesSelectMenu" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-secondary focus:border-secondary transition duration-150">
                             <option value="" disabled selected>-- Selecione uma Turma --</option>
                         </select>
                     </div>
-                    <div>
-                        <label for="dateInput" class="block text-sm font-medium text-gray-700 mb-1">Data da Aula:</label>
-                        <input type="date" id="dateInput" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-secondary focus:border-secondary transition duration-150">
-                    </div>
-                    <div class="mt-4 space-y-2">
-                        <button id="openAddClassBtn" class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-150">
+                    <div class="space-y-2">
+                        <button id="openAddClassBtnMenu" class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-150">
                             Adicionar Nova Turma Base
                         </button>
-                        <button id="openEditClassBtn" class="w-full bg-secondary hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-150 hidden">
+                        <button id="openEditClassBtnMenu" class="w-full bg-secondary hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-150 hidden">
                             Editar Turma Base Selecionada
                         </button>
-                        <button id="deleteClassQuickBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-150 hidden">
+                        <button id="deleteClassQuickBtnMenu" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-150 hidden">
                             Excluir Turma Selecionada
                         </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button id="btnPreencherPresenca" class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-6 px-4 rounded-lg shadow-lg transition-all duration-150 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" disabled>
+                        <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                        <span class="text-lg">Preencher Presença</span>
+                        <p class="text-xs mt-1 opacity-90">Registrar frequência diária</p>
+                    </button>
+
+                    <button id="btnGerarRelatorio" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-6 px-4 rounded-lg shadow-lg transition-all duration-150 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" disabled>
+                        <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="text-lg">Gerar Relatório</span>
+                        <p class="text-xs mt-1 opacity-90">Análise semanal/mensal</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TELA DE PREENCHIMENTO DE PRESENÇA -->
+            <div id="telaPresenca" class="hidden space-y-6">
+                <button id="btnVoltarMenu" class="flex items-center text-primary hover:text-indigo-700 font-medium transition-colors duration-150">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Voltar ao Menu
+                </button>
+
+                <div class="p-4 bg-primary/10 rounded-lg border border-primary/20 shadow-inner">
+                    <h2 class="text-xl font-semibold text-primary mb-3">Data da Aula</h2>
+                    <div>
+                        <label for="dateInput" class="block text-sm font-medium text-gray-700 mb-1">Data:</label>
+                        <input type="date" id="dateInput" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-secondary focus:border-secondary transition duration-150">
                     </div>
                 </div>
 
                 <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
                     <div class="flex justify-between items-center mb-4 border-b pb-2">
                         <div>
-                            <h3 id="currentClassTitle" class="text-xl font-bold text-gray-800">Selecione uma turma acima</h3>
+                            <h3 id="currentClassTitle" class="text-xl font-bold text-gray-800">Turma</h3>
                             <p id="dateDisplay" class="text-sm text-gray-500"></p>
                         </div>
                         <div class="flex space-x-2">
@@ -86,7 +118,7 @@
                     </div>
                     
                     <div id="studentsListContainer" class="scrollable-content space-y-2 mb-4 min-h-[100px]">
-                        <p class="text-center text-gray-500 py-4">Selecione uma turma e data.</p>
+                        <p class="text-center text-gray-500 py-4">Carregando alunos...</p>
                     </div>
 
                     <button id="saveAttendanceBtn"
@@ -94,6 +126,59 @@
                             disabled>
                         Salvar Frequência
                     </button>
+                </div>
+            </div>
+
+            <!-- TELA DE RELATÓRIOS -->
+            <div id="telaRelatorio" class="hidden space-y-6">
+                <button id="btnVoltarMenuRelatorio" class="flex items-center text-primary hover:text-indigo-700 font-medium transition-colors duration-150">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Voltar ao Menu
+                </button>
+
+                <div class="p-4 bg-primary/10 rounded-lg border border-primary/20 shadow-inner">
+                    <h2 class="text-xl font-semibold text-primary mb-3">Configurações do Relatório</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Período:</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="btnPeriodoSemanal" class="periodo-btn bg-white border-2 border-primary text-primary font-medium py-2 px-4 rounded-lg hover:bg-primary hover:text-white transition-colors duration-150">
+                                    Semanal
+                                </button>
+                                <button id="btnPeriodoMensal" class="periodo-btn bg-white border-2 border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg hover:bg-primary hover:text-white hover:border-primary transition-colors duration-150">
+                                    Mensal
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="periodoSemanalConfig" class="space-y-2">
+                            <label for="semanaInput" class="block text-sm font-medium text-gray-700">Selecione a semana:</label>
+                            <input type="week" id="semanaInput" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-secondary focus:border-secondary transition duration-150">
+                        </div>
+
+                        <div id="periodoMensalConfig" class="space-y-2 hidden">
+                            <label for="mesInput" class="block text-sm font-medium text-gray-700">Selecione o mês:</label>
+                            <input type="month" id="mesInput" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-secondary focus:border-secondary transition duration-150">
+                        </div>
+
+                        <button id="btnGerarRelatorioFinal" class="w-full bg-secondary hover:bg-emerald-600 text-white font-bold py-3 rounded-lg shadow-lg transition-colors duration-150">
+                            Gerar Relatório
+                        </button>
+                    </div>
+                </div>
+
+                <div id="relatorioResultado" class="bg-white p-4 rounded-lg shadow-lg border border-gray-200 hidden">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h3 class="text-xl font-bold text-gray-800">Relatório Gerado</h3>
+                        <button id="exportRelatorioBtn" class="bg-primary hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 text-sm">
+                            Exportar CSV
+                        </button>
+                    </div>
+                    <div id="relatorioConteudo" class="scrollable-content space-y-3">
+                        <!-- Conteúdo do relatório será inserido aqui -->
+                    </div>
                 </div>
             </div>
             
