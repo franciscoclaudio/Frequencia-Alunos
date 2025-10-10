@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequência Alunos</title>
+    <link rel="stylesheet" href="frequencia_alunos_styles.css">
+</head>
+<body>
+    <div class="container">
+        
+        <div class="header-logo">
+            <img id="logoPrincipal" 
+                 class="logo-img" 
+                 src="img/logo.png" 
+                 alt="Logo Escola"> 
+            
+            <h1>Escola Saber</h1>
+        </div>
+        
+        <h2>Registro de Frequência e Observações</h2>
+        
+        <p>
+            <label for="logoUpload">Substituir Logo:</label>
+            <input type="file" id="logoUpload" accept="image/*" onchange="previewImage(event, 'logoPrincipal')">
+        </p>
+        
+        <div class="control-block">
+            <label for="dataAula">Data da aula:</label>
+            <input type="date" id="dataAula" name="data" required>
+        </div>
+
+        <div class="control-block">
+            <label for="turmasSelect">Selecionar Turma:</label>
+            <select id="turmasSelect" onchange="carregarTurmaSelecionada(this.value); toggleUploadBlock(this.value);">
+                <option value="">-- Selecione uma turma --</option>
+                <option value="Turma 10C PE (37 Alunos)">Turma 10C PE (37 Alunos)</option>
+                <option value="NOVA_TURMA_UPLOAD">Adicionar Nova Turma...</option>
+            </select>
+        </div>
+
+        <div class="upload-block" id="uploadBlockContainer" style="display: none;"> 
+            <label for="listaAlunosUpload">Carregar arquivo TXT (Ex:Turma_10D_PE.txt):</label>
+            <input type="file" id="listaAlunosUpload" accept=".txt" onchange="processarListaAlunos(event)">
+        </div>
+        
+        <form id="FrequenciaGeral">  
+            <div id="alunosContainer">
+                <p>Selecione ou carregue uma turma para iniciar a chamada.</p>
+            </div>
+        
+            <br>
+            <button type="button" onclick="coletarDados()">Submeter</button>
+        </form>
+        <p id="resultado"></p>
+        
+    </div>
+<script src="frequencia_alunos_script.js"></script>
+</body>
+</html>
