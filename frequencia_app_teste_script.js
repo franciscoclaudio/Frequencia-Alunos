@@ -436,11 +436,15 @@ async function loadFrequencyForDate(classId, dateString) {
     }
 }
 
+// Novo e correto corpo da função registerFrequency()
 async function registerFrequency() {
     if (!currentClassId || !dateInputEl.value) {
         showMessage("Selecione uma turma e uma data.", 'error');
         return;
     }
+
+    // Coloca o texto do botão para o estado padrão caso a função falhe antes do final
+    saveAttendanceBtn.textContent = 'Salvar Frequência';
 
     const dateString = dateInputEl.value;
     const frequencyPath = getFrequencyCollectionPath(currentClassId);
@@ -452,40 +456,40 @@ async function registerFrequency() {
     studentItems.forEach(item => {
         const name = item.dataset.studentName;
         const presenceCheckbox = item.querySelector('.presence-checkbox');
-        const isPresent = presenceCheckbox.checked ? "SIM" : "NÃO";
-
+        
+        // Coleta os valores do registro
         const pontualidade = item.querySelector('.pontualidade-select')?.value || "";
         const harmonia = item.querySelector('.harmonia-select')?.value || "";
         const participacao = item.querySelector('.participacao-select')?.value || "";
 
-        const getDisplayValue = (value) => value === "" ? "Não Observado" : value.charAt(0).toUpperCase() + value.slice(1);
-
-        const row = [
-            `"${name}"`,
-            isPresent,
-            getDisplayValue(pontualidade),
-            getDisplayValue(harmonia),
-            getDisplayValue(participacao)
-        ].join(';');
-
-        csvContent += row + "\n";
+        records[name] = {
+            present: presenceCheckbox.checked,
+            // Armazena vazio ou "não observado" se não houver valor
+            pontualidade: pontualidade === "" ? "não observado" : pontualidade,
+            harmonia: harmonia === "" ? "não observado" : harmonia,
+            participacao: participacao === "" ? "não observado" : participacao
+        };
     });
 
-    const filename = `${className}_Frequencia_${dateString}.csv`;
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const frequencyData = {
+        classId: currentClassId,
+        date: dateString,
+        records: records,
+        updatedAt: new Date().toISOString()
+    };
 
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showMessage(`Exportação para CSV de "${className}" concluída!`);
-    } else {
-        showMessage("Seu navegador não suporta download de arquivos.", 'error');
+    try {
+        const frequencyDocRef = doc(db, frequencyPath, dateString);
+        await setDoc(frequencyDocRef, frequencyData); // <<== SALVA NO FIRESTORE
+
+        currentFrequencyDocId = dateString;
+        saveAttendanceBtn.textContent = 'Atualizar Frequência';
+        showMessage(`Frequência salva para ${dateString}!`);
+    } catch (error) {
+        // Reverte o texto do botão em caso de erro
+        saveAttendanceBtn.textContent = 'Salvar Frequência';
+        console.error("Erro ao registrar frequência:", error);
+        showMessage("Erro ao salvar: " + error.message, 'error');
     }
 }
 
