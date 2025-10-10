@@ -1,36 +1,42 @@
-# 📊 Sistema de Registro de Frequência e Observações (Local/HTML)
+# 📝 Sistema de Registro de Frequência e Observações (SPA)
 
-Este é um aplicativo web simples e de página única (SPA) desenvolvido em **HTML, CSS e JavaScript puro** para facilitar o registro rápido de frequência e observações pedagógicas de alunos por turma.
+Este é um aplicativo web de **Página Única (SPA)**, desenvolvido com **HTML, CSS e JavaScript puros**, focado em otimizar o registro de frequência e observações pedagógicas dos alunos.
 
-O foco é na **usabilidade offline** e na geração de um arquivo de texto estruturado (`.txt`) para posterior análise ou importação de dados.
+Seu principal diferencial é o foco na **usabilidade offline** e na geração de um arquivo de texto estruturado (`.txt`) para análise e importação posterior de dados.
 
-# 🚀 Acesso ao Projeto
+## 🚀 Acesso e Demonstração
 
-Este projeto está hospedado no GitHub Pages e pode ser acessado em:
+O projeto está hospedado no GitHub Pages e pode ser acessado diretamente:
 
-[Acesse a aplicação aqui](https://franciscoclaudio.github.io/Frequencia-Alunos/frequencia_alunos.html)
+🔗 **[Acesse a Aplicação Aqui](https://franciscoclaudio.github.io/Frequencia-Alunos/frequencia_alunos.html)**
+
+---
 
 ## ✨ Funcionalidades Principais
 
-* **Registro de Presença:** Marcação simples de "Presente" ou "Falta" por aluno.
-* **Observações Pedagógicas:** Campos para registrar "Participação", "Harmonia" e "Pontualidade".
-* **Gestão de Turmas:**
-    * Carregamento de listas de alunos via arquivo `.txt`.
-    * Opções de turmas pré-carregadas.
-* **Exportação de Dados:** Ao submeter, o sistema gera e baixa automaticamente um arquivo `.txt` com todos os dados preenchidos, formatados por turma e data.
-* **Interface Dinâmica:** O bloco de upload de novas turmas só é exibido quando a opção é selecionada no dropdown.
+* **Marcação de Presença:** Registro rápido de **Presente** ou **Falta** por aluno.
+* **Observações Detalhadas:** Campos específicos para registrar **Participação**, **Harmonia** e **Pontualidade**.
+* **Gestão Dinâmica de Turmas:**
+    * Suporte a **turmas pré-carregadas**.
+    * Capacidade de carregar novas listas de alunos via arquivo local (`.txt`).
+* **Exportação de Dados (Offline):** Ao submeter, o sistema gera e baixa automaticamente um arquivo `.txt` com todos os registros formatados por **turma e data**.
+* **Interface Limpa:** O bloco de upload de turmas é exibido de forma condicional, apenas quando a opção de carregamento é selecionada.
 
-## 🛠️ Como Utilizar (Localmente)
+---
 
-Por ser um projeto puramente HTML/CSS/JS, não requer servidor ou instalação de dependências:
+## 🛠️ Como Utilizar Localmente
 
-1.  **Clone o repositório** (ou baixe o arquivo `index.html` ou `Frequencia.html`).
-2.  Abra o arquivo **diretamente no seu navegador** (Chrome, Firefox, Edge, etc.).
-3.  O sistema estará pronto para uso offline.
+Por ser um projeto puramente **HTML/CSS/JS**, ele não exige servidor web, ambiente Node.js ou instalação de dependências.
 
-### 📝 Formato de Arquivo de Turma (`.txt`)
+1.  **Clone o repositório** (ou baixe os arquivos fonte).
+2.  Abra o arquivo HTML principal (ex: `frequencia_app_teste.html` ou `index.html`) **diretamente no seu navegador** (Chrome, Firefox, etc.).
+3.  O sistema estará totalmente funcional para **uso offline**.
 
-Para carregar uma nova turma, o arquivo de texto (`.txt`) deve conter um nome de aluno por linha, sem numeração ou caracteres adicionais.
+### 📝 Formato do Arquivo de Turma (`.txt`)
+
+Para carregar uma nova turma, o arquivo de texto (`.txt`) deve conter **um nome de aluno por linha**, sem numeração, vírgulas ou caracteres adicionais.
+
+**Exemplo:**
 
 ```txt
 Nome do Aluno A
