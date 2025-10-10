@@ -890,292 +890,57 @@ if (semanaInputEl) {
 }
 handlePeriodSelection('Semanal');
 
+// ========================================
+// INICIALIZAÇÃO DA APLICAÇÃO
+// ========================================
+
 async function initializeAppAndAuth() {
+    // Inicializa o Firebase
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+
+    // 1. Tenta autenticar anonimamente
     try {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(auth);
-        
         await signInAnonymously(auth);
-        
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                userId = user.uid;
-                userIdDisplayEl.textContent = `Usuário: ${userId.substring(0, 8)}...`;
-                loadingEl.classList.add('hidden');
-                menuInicialEl.classList.remove('hidden');
-                loadSavedLogo();
-                setupClassesListener();
-                
-                if (semanaDisplayEl) {
-                    updateWeekDisplay();
-                }
-            } else {
-                userIdDisplayEl.textContent = `Usuário: Desconectado`;
-                showMessage('Erro de autenticação. Recarregue a página.', 'error');
-            }
-        });
     } catch (error) {
-        console.error("❌ Erro durante a inicialização:", error);
-        loadingEl.innerHTML = `<p class="text-red-600 text-center font-medium">Erro: ${error.message}</p>`;
-        showMessage('Erro ao conectar ao Firebase: ' + error.message, 'error');
-    }
-}
-
-initializeAppAndAuth();;
-        const presenceCheckbox = item.querySelector('.presence-checkbox');
-        const pontualidade = item.querySelector('.pontualidade-select')?.value || "não observado";
-        const harmonia = item.querySelector('.harmonia-select')?.value || "não observado";
-        const participacao = item.querySelector('.participacao-select')?.value || "não observado";
-
-        records[name] = {
-            present: presenceCheckbox.checked,
-            pontualidade: pontualidade === "" ? "não observado" : pontualidade,
-            harmonia: harmonia === "" ? "não observado" : harmonia,
-            participacao: participacao === "" ? "não observado" : participacao
-        };
-    });
-
-    const frequencyData = {
-        classId: currentClassId,
-        date: dateString,
-        records: records,
-        updatedAt: new Date().toISOString()
-    };
-
-    try {
-        const frequencyDocRef = doc(db, frequencyPath, dateString);
-        await setDoc(frequencyDocRef, frequencyData);
-
-        currentFrequencyDocId = dateString;
-        saveAttendanceBtn.textContent = 'Atualizar Frequência';
-        showMessage(`Frequência salva para ${dateString}!`);
-    } catch (error) {
-        // ✅ CORREÇÃO: Reverte o texto do botão em caso de erro
-        saveAttendanceBtn.textContent = 'Salvar Frequência';
-        console.error("Erro ao registrar frequência:", error);
-        showMessage("Erro ao salvar: " + error.message, 'error');
-    }
-}
-
-// ========================================
-// RENDERIZAÇÃO E NAVEGAÇÃO
-// ========================================
-
-function navigateTo(screenId) {
-    menuInicialEl.classList.add('hidden');
-    telaPresencaEl.classList.add('hidden');
-    telaRelatorioEl.classList.add('hidden');
-
-    if (screenId === 'menu') {
-        menuInicialEl.classList.remove('hidden');
-    } else if (screenId === 'presenca') {
-        telaPresencaEl.classList.remove('hidden');
-        if (currentClassId && dateInputEl.value) {
-            loadFrequencyForDate(currentClassId, dateInputEl.value);
-        } else if (currentClassId) {
-            renderStudentList(currentClassData.students, {});
-        } else {
-            clearStudentList();
-        }
-    } else if (screenId === 'relatorio') {
-        telaRelatorioEl.classList.remove('hidden');
-        relatorioResultadoEl.classList.add('hidden');
-        relatorioConteudoEl.innerHTML = 'Preencha as configurações e clique em Gerar Relatório.';
-        updateWeekDisplay();
-    }
-}
-
-function updateClassSelects() {
-    const previouslySelectedClassId = classesSelectEl.value;
-    classesSelectEl.innerHTML = '<option value="" disabled selected>-- Selecione uma Turma --</option>';
-    
-    currentClasses.forEach(classData => {
-        const option = document.createElement('option');
-        option.value = classData.id;
-        option.textContent = `${classData.name} (${classData.students.length} alunos)`;
-        classesSelectEl.appendChild(option);
-    });
-
-    const newSelectionId = currentClassId || previouslySelectedClassId;
-
-    if (newSelectionId && currentClasses.some(c => c.id === newSelectionId)) {
-        classesSelectEl.value = newSelectionId;
-        currentClassId = newSelectionId;
-        currentClassData = currentClasses.find(c => c.id === newSelectionId);
-        handleClassSelection(newSelectionId);
-    } else {
-        classesSelectEl.value = "";
-        currentClassId = null;
-        currentClassData = null;
-        clearStudentList();
-        btnPreencherPresenca.disabled = true;
-        btnGerarRelatorio.disabled = true;
-        openEditClassBtn.classList.add('hidden');
-        openDeleteClassQuickBtn.classList.add('hidden');
-    }
-}
-
-function clearStudentList() {
-    studentsListContainerEl.innerHTML = `
-        <p class="text-center text-gray-500 py-4">Selecione uma turma e data.</p>
-    `;
-    currentClassTitleEl.textContent = 'Selecione uma turma acima';
-    dateDisplayEl.textContent = '';
-    saveAttendanceBtn.disabled = true;
-    exportCSVBtn.disabled = true;
-    openEditClassBtn.classList.add('hidden');
-    openDeleteClassQuickBtn.classList.add('hidden');
-}
-
-function renderStudentList(students, records) {
-    studentsListContainerEl.innerHTML = '';
-    
-    const listHtml = students.map((name, index) => {
-        // ✅ CORREÇÃO: Lógica simplificada de presença
-        const record = records[name];
-        const isPresent = record ? record.present : true; // Default: presente
-        
-        const indexDisplay = index + 1;
-        const studentRowClasses = isPresent ? 'bg-white' : 'bg-red-50';
-        const switchBgColor = isPresent ? 'bg-primary' : 'bg-gray-200';
-        const switchTranslate = isPresent ? 'translate-x-6' : 'translate-x-1';
-
-        const pontualidadeValue = record?.pontualidade && record.pontualidade !== "não observado" ? record.pontualidade : "";
-        const harmoniaValue = record?.harmonia && record.harmonia !== "não observado" ? record.harmonia : "";
-        const participacaoValue = record?.participacao && record.participacao !== "não observado" ? record.participacao : "";
-
-        return `
-            <li data-student-name="${name}" class="student-item ${studentRowClasses} p-3 rounded-lg transition-colors duration-300 border-b border-gray-100 last:border-0">
-                <div class="flex items-center justify-between">
-                    <span class="text-base font-medium text-gray-900 truncate pr-4">
-                        ${indexDisplay}. ${name}
-                    </span>
-                    <label class="flex items-center cursor-pointer flex-shrink-0">
-                        <span class="mr-2 text-sm font-medium text-gray-700 min-w-[60px] text-right">${isPresent ? 'Presente' : 'Ausente'}</span>
-                        <div class="relative">
-                            <input type="checkbox"
-                                class="sr-only presence-checkbox"
-                                ${isPresent ? 'checked' : ''}
-                                onchange="handlePresenceChange(this)">
-                            <div class="block ${switchBgColor} w-14 h-8 rounded-full transition duration-300"></div>
-                            <div class="dot absolute left-0.5 top-0.5 bg-white w-7 h-7 rounded-full shadow-lg transform ${switchTranslate} transition duration-300"></div>
-                        </div>
-                    </label>
-                </div>
-                <div class="flex flex-col md:flex-row gap-2 mt-2">
-                    <label class="text-xs text-gray-700 font-medium">
-                        Pontualidade:
-                        <select class="pontualidade-select border rounded px-1 py-0.5">
-                            <option value="" ${pontualidadeValue === "" ? 'selected' : ''}>Não Observado</option>
-                            <option value="pontual" ${pontualidadeValue === "pontual" ? 'selected' : ''}>Pontual</option>
-                            <option value="atrasado" ${pontualidadeValue === "atrasado" ? 'selected' : ''}>Atrasado</option>
-                        </select>
-                    </label>
-                    <label class="text-xs text-gray-700 font-medium">
-                        Harmonia:
-                        <select class="harmonia-select border rounded px-1 py-0.5">
-                            <option value="" ${harmoniaValue === "" ? 'selected' : ''}>Não Observado</option>
-                            <option value="harmonioso" ${harmoniaValue === "harmonioso" ? 'selected' : ''}>Harmonioso</option>
-                            <option value="conflituoso" ${harmoniaValue === "conflituoso" ? 'selected' : ''}>Conflituoso</option>
-                        </select>
-                    </label>
-                    <label class="text-xs text-gray-700 font-medium">
-                        Participação:
-                        <select class="participacao-select border rounded px-1 py-0.5">
-                            <option value="" ${participacaoValue === "" ? 'selected' : ''}>Não Observado</option>
-                            <option value="participativo" ${participacaoValue === "participativo" ? 'selected' : ''}>Participativo</option>
-                            <option value="pouco participativo" ${participacaoValue === "pouco participativo" ? 'selected' : ''}>Pouco participativo</option>
-                        </select>
-                    </label>
-                </div>
-            </li>
-        `;
-    }).join('');
-
-    studentsListContainerEl.innerHTML = `<ul class="space-y-1">${listHtml}</ul>`;
-    currentClassTitleEl.textContent = currentClassData.name;
-    dateDisplayEl.textContent = dateInputEl.value ? `Data: ${new Date(dateInputEl.value + 'T00:00:00').toLocaleDateString('pt-BR')}` : '';
-    saveAttendanceBtn.disabled = false;
-    exportCSVBtn.disabled = false;
-}
-
-window.handlePresenceChange = function(checkbox) {
-    const studentItem = checkbox.closest('.student-item');
-    const isPresent = checkbox.checked;
-    const switchBg = checkbox.nextElementSibling;
-    const switchDot = switchBg.nextElementSibling;
-    const label = checkbox.closest('label').querySelector('span');
-
-    if (isPresent) {
-        studentItem.classList.remove('bg-red-50');
-        studentItem.classList.add('bg-white');
-        label.textContent = 'Presente';
-        switchBg.classList.remove('bg-gray-200');
-        switchBg.classList.add('bg-primary');
-        switchDot.classList.add('translate-x-6');
-        switchDot.classList.remove('translate-x-1');
-    } else {
-        studentItem.classList.remove('bg-white');
-        studentItem.classList.add('bg-red-50');
-        label.textContent = 'Ausente';
-        switchBg.classList.remove('bg-primary');
-        switchBg.classList.add('bg-gray-200');
-        switchDot.classList.remove('translate-x-6');
-        switchDot.classList.add('translate-x-1');
-    }
-}
-
-function exportAttendanceToCSV() {
-    if (!currentClassId || !dateInputEl.value) {
-        showMessage("Nenhuma frequência carregada para exportar.", 'error');
+        console.error("Erro na autenticação anônima:", error);
+        showMessage("Falha ao conectar. Tente recarregar a página.", 'error');
+        // Se a autenticação falhar, não podemos prosseguir
         return;
     }
 
-    const dateString = dateInputEl.value;
-    const className = currentClassData.name;
-    const studentItems = studentsListContainerEl.querySelectorAll('.student-item');
-
-    let csvContent = `Turma: ${className}\n`;
-    csvContent += `Data: ${dateString}\n`;
-    csvContent += "Nome;Presente;Pontualidade;Harmonia;Participação\n";
-
-    studentItems.forEach(item => {
-        const name = item.dataset.studentName;
-        const presenceCheckbox = item.querySelector('.presence-checkbox');
-        const isPresent = presenceCheckbox.checked ? "SIM" : "NÃO";
-
-        const pontualidade = item.querySelector('.pontualidade-select')?.value || "";
-        const harmonia = item.querySelector('.harmonia-select')?.value || "";
-        const participacao = item.querySelector('.participacao-select')?.value || "";
-
-        const getDisplayValue = (value) => value === "" ? "Não Observado" : value.charAt(0).toUpperCase() + value.slice(1);
-
-        const row = [
-            `"${name}"`,
-            isPresent,
-            getDisplayValue(pontualidade),
-            getDisplayValue(harmonia),
-            getDisplayValue(participacao)
-        ].join(';');
-
-        csvContent += row + "\n";
+    // 2. Observa o estado de autenticação
+    // Esta função será chamada sempre que o estado de autenticação mudar (e uma vez no carregamento)
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // Usuário autenticado (anônimo ou não)
+            userId = user.uid;
+            
+            // Atualiza o status na UI
+            userStatusEl.textContent = `Usuário: ${userId.substring(0, 8)}...`;
+            
+            // Inicia o listener de turmas (que monitora o Firestore em tempo real)
+            setupClassesListener();
+            
+            // Configura os ouvintes de eventos da UI (botões, inputs, etc.)
+            setupEventListeners();
+            
+            // Navega para o menu principal
+            navigateTo('menu');
+            
+        } else {
+            // Usuário deslogado - essencial para tratar desautenticações
+            console.log("Nenhum usuário logado.");
+        }
     });
-
-    const filename = `${className}_Frequencia_${dateString}.csv`;
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showMessage(`Exportação para CSV de "${className}" concluída!`);
-    } else {
-        showMessage("Seu navegador não suporta download de arquivos.", 'error');
-    }
 }
+
+
+// ========================================
+// CHAMADA DE INICIALIZAÇÃO DO APP
+// ========================================
+
+// Esta é a única linha que deve estar solta no final do script.
+// Ela inicia todo o fluxo do aplicativo.
+initializeAppAndAuth();
