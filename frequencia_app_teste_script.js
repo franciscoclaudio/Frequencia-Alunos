@@ -1,10 +1,14 @@
+// ========================================
+// PARTE 1/2 - IMPORTS E CONFIGURAÇÃO
+// ========================================
+
 // Importações do Firebase SDK v11 (JavaScript)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, getDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, getDoc, getDocs, deleteDoc, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // ========================================
-// CONFIGURAÇÃO FIREBASE (SUAS CREDENCIAIS)
+// CONFIGURAÇÃO FIREBASE
 // ========================================
 const firebaseConfig = {
     apiKey: "AIzaSyDo6uA_fJGbKqLfj9kwUu1JSkC34HGlWk0",
@@ -24,21 +28,20 @@ let currentClasses = [];
 let currentClassId = null;
 let currentClassData = null;
 let currentFrequencyDocId = null;
-let selectedReportPeriod = 'Semanal'; // Padrão: Semanal
+let selectedReportPeriod = 'Semanal';
 
-// --- ELEMENTOS DO DOM (Ajustados para o layout com menus) ---
+// --- ELEMENTOS DO DOM ---
 const loadingEl = document.getElementById('loadingIndicator');
-// appContentEl não existe no HTML, o conteúdo está dentro de .container-app
 const userIdDisplayEl = document.getElementById('userIdDisplay');
 const logoImg = document.getElementById('logoImg');
 const logoUploadInput = document.getElementById('logoUpload');
 
 // Elementos do Menu Inicial
 const menuInicialEl = document.getElementById('menuInicial');
-const classesSelectEl = document.getElementById('classesSelectMenu'); // ID atualizado
-const openAddClassBtn = document.getElementById('openAddClassBtnMenu'); // ID atualizado
-const openEditClassBtn = document.getElementById('openEditClassBtnMenu'); // ID atualizado
-const openDeleteClassQuickBtn = document.getElementById('deleteClassQuickBtnMenu'); // ID atualizado
+const classesSelectEl = document.getElementById('classesSelectMenu');
+const openAddClassBtn = document.getElementById('openAddClassBtnMenu');
+const openEditClassBtn = document.getElementById('openEditClassBtnMenu');
+const openDeleteClassQuickBtn = document.getElementById('deleteClassQuickBtnMenu');
 const btnPreencherPresenca = document.getElementById('btnPreencherPresenca');
 const btnGerarRelatorio = document.getElementById('btnGerarRelatorio');
 
@@ -60,13 +63,12 @@ const btnPeriodoMensal = document.getElementById('btnPeriodoMensal');
 const periodoSemanalConfig = document.getElementById('periodoSemanalConfig');
 const periodoMensalConfig = document.getElementById('periodoMensalConfig');
 const semanaInputEl = document.getElementById('semanaInput');
-const semanaDisplayEl = document.getElementById('semanaDisplay'); // NOVO: Elemento para mostrar o intervalo da semana formatado
+const semanaDisplayEl = document.getElementById('semanaDisplay');
 const mesInputEl = document.getElementById('mesInput');
 const btnGerarRelatorioFinal = document.getElementById('btnGerarRelatorioFinal');
 const relatorioResultadoEl = document.getElementById('relatorioResultado');
 const exportRelatorioBtn = document.getElementById('exportRelatorioBtn');
 const relatorioConteudoEl = document.getElementById('relatorioConteudo');
-
 
 // Elementos do Modal e Toast
 const messageToast = document.getElementById('messageToast');
@@ -81,14 +83,10 @@ const cancelAddClassBtn = document.getElementById('cancelAddClassBtn');
 const saveClassBtn = document.getElementById('saveClassBtn');
 const deleteClassBtn = document.getElementById('deleteClassBtn');
 
+// ========================================
+// UTILIDADES DE DATA (ISO 8601)
+// ========================================
 
-// --- UTILIDADES ---
-
-// Funções de manipulação e cálculo de datas para o relatório semanal (ISO 8601)
-
-/**
- * Helper function to get the ISO week (YYYY-Www) of a date.
- */
 function getISOWeek(date) {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
     const dayNum = d.getUTCDay() || 7;
@@ -98,10 +96,6 @@ function getISOWeek(date) {
     return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
 }
 
-/**
- * Calculates the start and end date (Monday to Sunday) for a given ISO week string (YYYY-Www).
- * Returns { startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD', display: 'DD a DD MÊS YYYY, semana WW' }
- */
 function getDateRangeOfWeek(isoWeekString) {
     if (!isoWeekString || !isoWeekString.match(/^\d{4}-W\d{2}$/)) {
         return { startDate: null, endDate: null, display: 'Selecione uma semana válida' };
@@ -111,37 +105,24 @@ function getDateRangeOfWeek(isoWeekString) {
     const year = parseInt(yearStr, 10);
     const week = parseInt(weekStr, 10);
 
-    // 1. Get the date of January 4th of the given year (which is always in week 1)
     const jan4 = new Date(year, 0, 4);
+    let jan4Day = jan4.getDay();
+    let jan4ISOday = jan4Day === 0 ? 7 : jan4Day;
 
-    // 2. Get the day of the week for Jan 4th (0 = Sunday, 1 = Monday, ..., 6 = Saturday).
-    // ISO standard: Monday is day 1. JS: Sunday is day 0.
-    let jan4Day = jan4.getDay(); // 0 to 6
-    let jan4ISOday = jan4Day === 0 ? 7 : jan4Day; // Convert JS day (0-6, Sun-Sat) to ISO day (1-7, Mon-Sun)
-
-    // 3. Calculate the date of the Monday of the first week of the year
     const firstMonday = new Date(jan4);
     firstMonday.setDate(jan4.getDate() + 1 - jan4ISOday);
 
-    // 4. Calculate the start date (Monday) of the target week
     const targetMonday = new Date(firstMonday);
     targetMonday.setDate(firstMonday.getDate() + (week - 1) * 7);
 
-    // 5. Calculate the end date (Sunday) of the target week
     const targetSunday = new Date(targetMonday);
     targetSunday.setDate(targetMonday.getDate() + 6);
 
-    // Helper to format date as YYYY-MM-DD
     const formatISODate = (date) => date.toISOString().split('T')[0];
-
-    // Helper to format date as DD
     const formatDay = (date) => date.getDate().toString().padStart(2, '0');
-
-    // Helper to format month name
     const monthNames = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
     const formatMonth = (date) => monthNames[date.getMonth()];
 
-    // Generate the desired display format
     const startDay = formatDay(targetMonday);
     const endDay = formatDay(targetSunday);
     const startMonthName = formatMonth(targetMonday);
@@ -150,37 +131,32 @@ function getDateRangeOfWeek(isoWeekString) {
     const displayWeek = week.toString().padStart(2, '0');
 
     let displayString;
-
-    // Verifica se a semana termina em um mês diferente do que começou
     if (targetMonday.getMonth() === targetSunday.getMonth()) {
         displayString = `${startDay} a ${endDay} ${startMonthName} ${displayYear}, semana ${displayWeek}`;
     } else {
         displayString = `${startDay} ${startMonthName} a ${endDay} ${endMonthName} ${displayYear}, semana ${displayWeek}`;
     }
 
-
     return {
-        startDate: formatISODate(targetMonday), // YYYY-MM-DD
-        endDate: formatISODate(targetSunday),   // YYYY-MM-DD
+        startDate: formatISODate(targetMonday),
+        endDate: formatISODate(targetSunday),
         display: displayString
     };
 }
 
-/**
- * Atualiza o elemento semanaDisplayEl com o intervalo de datas formatado.
- */
 function updateWeekDisplay() {
     const isoWeekValue = semanaInputEl.value;
     const weekRange = getDateRangeOfWeek(isoWeekValue);
-
     if (semanaDisplayEl) {
         semanaDisplayEl.textContent = weekRange.display;
     }
 }
-// --- FIM - Funções de manipulação de datas
+
+// ========================================
+// UTILIDADES DE UI
+// ========================================
 
 function showMessage(message, type = 'success') {
-// ... (código showMessage mantido)
     messageTextEl.textContent = message;
     messageToast.classList.remove('bg-green-500', 'bg-red-500', 'bg-blue-500');
     if (type === 'error') {
@@ -200,7 +176,6 @@ function showMessage(message, type = 'success') {
 }
 
 function closeMessage() {
-// ... (código closeMessage mantido)
     messageToast.classList.add('opacity-0');
     setTimeout(() => {
         messageToast.classList.add('hidden');
@@ -209,9 +184,9 @@ function closeMessage() {
 }
 
 function handleLogoUpload(event) {
-// ... (código handleLogoUpload mantido)
     const file = event.target.files[0];
     if (!file) return;
+    
     const reader = new FileReader();
     reader.onload = function(e) {
         logoImg.src = e.target.result;
@@ -226,7 +201,6 @@ function handleLogoUpload(event) {
 }
 
 function loadSavedLogo() {
-// ... (código loadSavedLogo mantido)
     try {
         const savedLogo = localStorage.getItem('customLogo');
         if (savedLogo) {
@@ -238,13 +212,11 @@ function loadSavedLogo() {
 }
 
 function showClassModal(isEditing = false, classData = null) {
-// ... (código showClassModal mantido)
     if (isEditing && classData) {
         modalTitleEl.textContent = `Editar: ${classData.name}`;
         classNameInputEl.value = classData.name || '';
         studentListInputEl.value = (classData.students || []).join('\n');
         deleteClassBtn.classList.remove('hidden');
-        // Ao editar, currentClassId já deve estar definido pela seleção no menu
     } else {
         modalTitleEl.textContent = 'Adicionar Nova Turma';
         classNameInputEl.value = '';
@@ -256,27 +228,19 @@ function showClassModal(isEditing = false, classData = null) {
     addClassModal.classList.add('flex');
 }
 
-/**
- * Funcao alterada para garantir que a seleção da turma seja mantida/restaurada após fechar o modal.
- */
 function hideClassModal() {
-// ... (código hideClassModal mantido)
     addClassModal.classList.add('hidden');
     addClassModal.classList.remove('flex');
-
-    // Limpa os campos do modal
     classNameInputEl.value = '';
     studentListInputEl.value = '';
     studentListFileEl.value = '';
-
-    // Força o re-carregamento da turma atualmente selecionada no <select>
     handleClassSelection(classesSelectEl.value);
 }
 
 function handleStudentListFile(event) {
-// ... (código handleStudentListFile mantido)
     const file = event.target.files[0];
     if (!file) return;
+    
     const reader = new FileReader();
     reader.onload = function(e) {
         const fileContent = e.target.result;
@@ -293,10 +257,11 @@ function handleStudentListFile(event) {
     reader.readAsText(file);
 }
 
-// --- FIREBASE / FIRESTORE (Manter a lógica original) ---
+// ========================================
+// FIREBASE / FIRESTORE PATHS
+// ========================================
 
 function getClassCollectionPath() {
-// ... (código getClassCollectionPath mantido)
     if (!userId) {
         console.error("UserID não definido.");
         return null;
@@ -305,7 +270,6 @@ function getClassCollectionPath() {
 }
 
 function getFrequencyCollectionPath(classId) {
-// ... (código getFrequencyCollectionPath mantido)
     if (!classId) {
         console.error("Class ID não definido para frequência.");
         return null;
@@ -313,12 +277,17 @@ function getFrequencyCollectionPath(classId) {
     return `${getClassCollectionPath()}/${classId}/frequency_records`;
 }
 
+// ========================================
+// FIREBASE / FIRESTORE LISTENERS
+// ========================================
+
 function setupClassesListener() {
-// ... (código setupClassesListener mantido)
     const classesPath = getClassCollectionPath();
     if (!classesPath) return;
+    
     const classesCollectionRef = collection(db, classesPath);
     const q = query(classesCollectionRef);
+    
     onSnapshot(q, (snapshot) => {
         currentClasses = [];
         snapshot.forEach((doc) => {
@@ -331,25 +300,32 @@ function setupClassesListener() {
     });
 }
 
+// ========================================
+// FIREBASE / FIRESTORE OPERAÇÕES - TURMAS
+// ========================================
+
 async function saveClass() {
-// ... (código saveClass mantido)
     const className = classNameInputEl.value.trim();
     const studentList = studentListInputEl.value.trim();
+    
     if (!className || !studentList) {
         showMessage("Preencha o nome da turma e a lista de alunos.", 'error');
         return;
     }
+    
     const students = studentList.split('\n')
         .map(name => name.trim())
         .filter(name => name.length > 0);
+        
     if (students.length === 0) {
         showMessage("A lista de alunos não pode estar vazia.", 'error');
         return;
     }
+    
     const classesPath = getClassCollectionPath();
     if (!classesPath) return;
+    
     try {
-        // currentClassId estará definido se estiver em modo de edição
         const isEditing = !!currentClassId && currentClasses.some(c => c.id === currentClassId);
 
         const classData = {
@@ -358,20 +334,20 @@ async function saveClass() {
             createdAt: isEditing && currentClassData ? currentClassData.createdAt : new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
+        
         const classIdToSave = isEditing ? currentClassId : null;
 
         if (classIdToSave) {
             const classDocRef = doc(db, classesPath, classIdToSave);
             await setDoc(classDocRef, classData);
             showMessage(`Turma "${className}" atualizada!`);
-            // Não precisa atualizar currentClassId aqui, ele já está correto
         } else {
             const newDocRef = await addDoc(collection(db, classesPath), classData);
             showMessage(`Turma "${className}" adicionada!`);
-            // Se for uma nova turma, define o ID atual para a recém-criada, assim ela é selecionada
             currentClassId = newDocRef.id;
             classesSelectEl.value = newDocRef.id;
         }
+        
         hideClassModal();
     } catch (error) {
         console.error("Erro ao salvar turma:", error);
@@ -379,21 +355,20 @@ async function saveClass() {
     }
 }
 
-/**
- * FUNÇÃO DELETAR TURMA VERIFICADA E CORRETA.
- * Ela usa currentClassId para garantir que apenas a turma selecionada seja excluída.
- */
 async function deleteClass() {
     if (!currentClassId) return;
+    
     if (!window.confirm(`Excluir a turma "${classNameInputEl.value.trim()}" e todos os registros? IRREVERSÍVEL!`)) {
         return;
     }
+    
     const classesPath = getClassCollectionPath();
     if (!classesPath) return;
+    
     try {
-        // 1. Apaga os registros de frequência (subcoleção) APENAS da turma selecionada
+        // ✅ CORREÇÃO: Apaga APENAS os registros da turma selecionada
         const frequencyPath = getFrequencyCollectionPath(currentClassId);
-        const q = query(collection(db, frequencyPath)); 
+        const q = query(collection(db, frequencyPath));
         const snapshot = await getDocs(q);
 
         const deletePromises = snapshot.docs.map(docToDelete =>
@@ -401,25 +376,28 @@ async function deleteClass() {
         );
         await Promise.all(deletePromises);
 
-        // 2. Apaga o documento principal da turma (o doc) APENAS da turma selecionada
         const classDocRef = doc(db, classesPath, currentClassId);
         await deleteDoc(classDocRef);
 
         showMessage(`Turma excluída com sucesso!`);
-
-        // Limpa o estado global, o select será atualizado pelo listener do Firestore
         currentClassId = null;
         currentClassData = null;
-
-        hideClassModal(); // Vai chamar handleClassSelection("") e limpar a UI
+        hideClassModal();
     } catch (error) {
         console.error("Erro ao excluir turma:", error);
         showMessage("Erro ao excluir turma: " + error.message, 'error');
     }
 }
+// ========================================
+// PARTE 2/2 - FREQUÊNCIA, RELATÓRIOS E UI
+// ========================================
+// ⚠️ IMPORTANTE: Cole esta parte logo após a Parte 1/2
+
+// ========================================
+// FIREBASE / FIRESTORE - FREQUÊNCIA
+// ========================================
 
 async function loadFrequencyForDate(classId, dateString) {
-// ... (código loadFrequencyForDate mantido)
     currentFrequencyDocId = null;
     saveAttendanceBtn.textContent = 'Salvar Frequência';
     saveAttendanceBtn.disabled = false;
@@ -432,11 +410,14 @@ async function loadFrequencyForDate(classId, dateString) {
 
     const frequencyPath = getFrequencyCollectionPath(classId);
     if (!frequencyPath) return;
+    
     const frequencyDocRef = doc(db, frequencyPath, dateString);
+    
     try {
         const docSnap = await getDoc(frequencyDocRef);
         const students = currentClassData.students;
         let frequencyRecords = {};
+        
         if (docSnap.exists()) {
             const data = docSnap.data();
             frequencyRecords = data.records || {};
@@ -446,6 +427,7 @@ async function loadFrequencyForDate(classId, dateString) {
         } else {
             showMessage(`Novo registro para ${dateString}`, 'info');
         }
+        
         renderStudentList(students, frequencyRecords);
     } catch (error) {
         console.error("Erro ao carregar frequência:", error);
@@ -454,11 +436,7 @@ async function loadFrequencyForDate(classId, dateString) {
     }
 }
 
-/**
- * Salva o registro de frequência incluindo critérios opcionais.
- */
 async function registerFrequency() {
-// ... (código registerFrequency mantido)
     if (!currentClassId || !dateInputEl.value) {
         showMessage("Selecione uma turma e uma data.", 'error');
         return;
@@ -474,15 +452,481 @@ async function registerFrequency() {
     studentItems.forEach(item => {
         const name = item.dataset.studentName;
         const presenceCheckbox = item.querySelector('.presence-checkbox');
-        // Novos critérios opcionais
+        const isPresent = presenceCheckbox.checked ? "SIM" : "NÃO";
+
+        const pontualidade = item.querySelector('.pontualidade-select')?.value || "";
+        const harmonia = item.querySelector('.harmonia-select')?.value || "";
+        const participacao = item.querySelector('.participacao-select')?.value || "";
+
+        const getDisplayValue = (value) => value === "" ? "Não Observado" : value.charAt(0).toUpperCase() + value.slice(1);
+
+        const row = [
+            `"${name}"`,
+            isPresent,
+            getDisplayValue(pontualidade),
+            getDisplayValue(harmonia),
+            getDisplayValue(participacao)
+        ].join(';');
+
+        csvContent += row + "\n";
+    });
+
+    const filename = `${className}_Frequencia_${dateString}.csv`;
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showMessage(`Exportação para CSV de "${className}" concluída!`);
+    } else {
+        showMessage("Seu navegador não suporta download de arquivos.", 'error');
+    }
+}
+
+// ========================================
+// SELEÇÃO E MANIPULAÇÃO DE TURMA
+// ========================================
+
+function handleClassSelection(classId) {
+    if (!classId || classId === "") {
+        currentClassId = null;
+        currentClassData = null;
+        clearStudentList();
+        btnPreencherPresenca.disabled = true;
+        btnGerarRelatorio.disabled = true;
+        openEditClassBtn.classList.add('hidden');
+        openDeleteClassQuickBtn.classList.add('hidden');
+        return;
+    }
+
+    const selectedClass = currentClasses.find(c => c.id === classId);
+    if (!selectedClass) {
+        currentClassId = null;
+        currentClassData = null;
+        clearStudentList();
+        btnPreencherPresenca.disabled = true;
+        btnGerarRelatorio.disabled = true;
+        openEditClassBtn.classList.add('hidden');
+        openDeleteClassQuickBtn.classList.add('hidden');
+        return;
+    }
+
+    currentClassId = classId;
+    currentClassData = selectedClass;
+
+    btnPreencherPresenca.disabled = false;
+    btnGerarRelatorio.disabled = false;
+    openEditClassBtn.classList.remove('hidden');
+    openDeleteClassQuickBtn.classList.remove('hidden');
+
+    if (!telaPresencaEl.classList.contains('hidden') && dateInputEl.value) {
+        loadFrequencyForDate(currentClassId, dateInputEl.value);
+    } else if (!telaPresencaEl.classList.contains('hidden')) {
+        renderStudentList(currentClassData.students, {});
+    }
+}
+
+function handleDateChange(dateString) {
+    if (!currentClassId) {
+        showMessage("Selecione uma turma primeiro.", 'error');
+        dateInputEl.value = '';
+        return;
+    }
+    if (dateString) {
+        loadFrequencyForDate(currentClassId, dateString);
+    } else {
+        renderStudentList(currentClassData.students, {});
+    }
+}
+
+function handleEditClassQuick() {
+    if (currentClassId && currentClassData) {
+        showClassModal(true, currentClassData);
+    } else {
+        showMessage("Selecione uma turma para editar.", 'error');
+    }
+}
+
+// ========================================
+// RELATÓRIOS
+// ========================================
+
+function handlePeriodSelection(period) {
+    selectedReportPeriod = period;
+
+    btnPeriodoSemanal.classList.remove('bg-white', 'border-primary', 'text-primary', 'border-gray-300', 'text-gray-700');
+    btnPeriodoMensal.classList.remove('bg-white', 'border-primary', 'text-primary', 'border-gray-300', 'text-gray-700');
+
+    if (period === 'Semanal') {
+        btnPeriodoSemanal.classList.add('bg-white', 'border-primary', 'text-primary');
+        btnPeriodoMensal.classList.add('bg-white', 'border-gray-300', 'text-gray-700');
+        periodoSemanalConfig.classList.remove('hidden');
+        periodoMensalConfig.classList.add('hidden');
+    } else {
+        btnPeriodoMensal.classList.add('bg-white', 'border-primary', 'text-primary');
+        btnPeriodoSemanal.classList.add('bg-white', 'border-gray-300', 'text-gray-700');
+        periodoSemanalConfig.classList.add('hidden');
+        periodoMensalConfig.classList.remove('hidden');
+    }
+    relatorioResultadoEl.classList.add('hidden');
+}
+
+async function generateReport() {
+    if (!currentClassId) {
+        showMessage("Selecione uma turma no menu inicial.", 'error');
+        return;
+    }
+
+    let startDate, endDate, periodDisplay, periodFileName;
+
+    if (selectedReportPeriod === 'Semanal') {
+        const weekValue = semanaInputEl.value;
+        if (!weekValue) {
+            showMessage("Selecione uma semana.", 'error');
+            return;
+        }
+
+        const weekRange = getDateRangeOfWeek(weekValue);
+        startDate = weekRange.startDate;
+        endDate = weekRange.endDate;
+        periodDisplay = weekRange.display;
+        periodFileName = weekValue;
+
+        if (!startDate || !endDate) {
+            showMessage("Erro ao calcular o período da semana. Verifique a seleção.", 'error');
+            return;
+        }
+    } else {
+        const monthValue = mesInputEl.value;
+        if (!monthValue) {
+            showMessage("Selecione um mês.", 'error');
+            return;
+        }
+        const [year, month] = monthValue.split('-');
+        startDate = `${year}-${month}-01`;
+        endDate = new Date(year, month, 0).toISOString().split('T')[0];
+        periodDisplay = `Mês: ${monthValue}`;
+        periodFileName = monthValue;
+    }
+
+    const frequencyPath = getFrequencyCollectionPath(currentClassId);
+    if (!frequencyPath) return;
+
+    try {
+        // ✅ OTIMIZAÇÃO: Query com filtro WHERE no servidor Firestore
+        const q = query(
+            collection(db, frequencyPath),
+            where("date", ">=", startDate),
+            where("date", "<=", endDate)
+        );
+        
+        const snapshot = await getDocs(q);
+        const allRecords = snapshot.docs.map(doc => doc.data());
+
+        if (allRecords.length === 0) {
+            relatorioConteudoEl.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum registro de frequência encontrado para o período ${periodDisplay}.</p>`;
+            relatorioResultadoEl.classList.remove('hidden');
+            exportRelatorioBtn.disabled = true;
+            showMessage("Nenhum dado encontrado para o relatório.", 'info');
+            return;
+        }
+
+        const studentStats = {};
+        currentClassData.students.forEach(name => {
+            studentStats[name] = { 
+                totalAulas: 0, 
+                totalPresencas: 0, 
+                totalAtrasos: 0, 
+                totalConflitos: 0, 
+                totalParticipativos: 0 
+            };
+        });
+
+        allRecords.forEach(record => {
+            Object.entries(record.records).forEach(([name, status]) => {
+                if (studentStats[name]) {
+                    studentStats[name].totalAulas++;
+                    if (status.present) {
+                        studentStats[name].totalPresencas++;
+                    }
+                    if (status.pontualidade === 'atrasado') {
+                        studentStats[name].totalAtrasos++;
+                    }
+                    if (status.harmonia === 'conflituoso') {
+                        studentStats[name].totalConflitos++;
+                    }
+                    if (status.participacao === 'participativo') {
+                        studentStats[name].totalParticipativos++;
+                    }
+                }
+            });
+        });
+
+        let reportHtml = `
+            <h4 class="text-lg font-semibold text-gray-800 mb-2">Turma: ${currentClassData.name}</h4>
+            <p class="text-sm text-gray-600 mb-4">Período: ${periodDisplay}</p>
+            <p class="text-sm text-gray-600 mb-4">Total de Aulas Registradas no Período: <span class="font-bold text-primary">${allRecords.length}</span></p>
+            <div class="space-y-4">
+        `;
+
+        Object.entries(studentStats).forEach(([name, stats]) => {
+            const freqPercent = stats.totalAulas > 0 ? ((stats.totalPresencas / stats.totalAulas) * 100).toFixed(1) : 0;
+            const presenceColor = freqPercent < 75 ? 'text-red-600 font-bold' : 'text-green-600 font-bold';
+
+            reportHtml += `
+                <div class="p-3 border rounded-lg shadow-sm bg-gray-50">
+                    <p class="font-bold text-gray-900">${name}</p>
+                    <p class="text-sm mt-1">
+                        Frequência: <span class="${presenceColor}">${stats.totalPresencas} / ${stats.totalAulas} (${freqPercent}%)</span>
+                    </p>
+                    <p class="text-xs text-gray-600">Atrasos: ${stats.totalAtrasos} | Conflituoso: ${stats.totalConflitos} | Participativo: ${stats.totalParticipativos}</p>
+                </div>
+            `;
+        });
+
+        reportHtml += '</div>';
+
+        relatorioConteudoEl.innerHTML = reportHtml;
+        relatorioResultadoEl.classList.remove('hidden');
+        exportRelatorioBtn.disabled = false;
+        showMessage("Relatório gerado com sucesso!", 'success');
+
+    } catch (error) {
+        console.error("Erro ao gerar relatório:", error);
+        showMessage("Erro ao gerar relatório: " + error.message, 'error');
+        relatorioConteudoEl.innerHTML = `<p class="text-center text-red-500 py-4">Erro ao carregar dados.</p>`;
+        relatorioResultadoEl.classList.remove('hidden');
+    }
+}
+
+async function exportReportToCSV() {
+    if (!currentClassId || relatorioResultadoEl.classList.contains('hidden')) {
+        showMessage("Nenhum relatório carregado para exportar.", 'error');
+        return;
+    }
+
+    let startDate, endDate, periodDisplay, periodFileName;
+
+    if (selectedReportPeriod === 'Semanal') {
+        const weekValue = semanaInputEl.value;
+        if (!weekValue) {
+            showMessage("Selecione uma semana.", 'error');
+            return;
+        }
+
+        const weekRange = getDateRangeOfWeek(weekValue);
+        startDate = weekRange.startDate;
+        endDate = weekRange.endDate;
+        periodDisplay = weekRange.display;
+        periodFileName = weekValue;
+
+        if (!startDate || !endDate) {
+            showMessage("Erro ao calcular o período da semana para exportação.", 'error');
+            return;
+        }
+    } else {
+        const monthValue = mesInputEl.value;
+        if (!monthValue) {
+            showMessage("Selecione um mês.", 'error');
+            return;
+        }
+        const [year, month] = monthValue.split('-');
+        startDate = `${year}-${month}-01`;
+        endDate = new Date(year, month, 0).toISOString().split('T')[0];
+        periodDisplay = `Mês: ${monthValue}`;
+        periodFileName = monthValue;
+    }
+
+    const frequencyPath = getFrequencyCollectionPath(currentClassId);
+    if (!frequencyPath) return;
+
+    try {
+        // ✅ OTIMIZAÇÃO: Query com filtro WHERE no servidor Firestore
+        const q = query(
+            collection(db, frequencyPath),
+            where("date", ">=", startDate),
+            where("date", "<=", endDate)
+        );
+        
+        const snapshot = await getDocs(q);
+        const fetchedRecords = snapshot.docs.map(doc => doc.data());
+
+        const studentStats = {};
+        currentClassData.students.forEach(name => {
+            studentStats[name] = { 
+                totalAulas: 0, 
+                totalPresencas: 0, 
+                totalAtrasos: 0, 
+                totalConflitos: 0, 
+                totalParticipativos: 0 
+            };
+        });
+
+        fetchedRecords.forEach(record => {
+            Object.entries(record.records).forEach(([name, status]) => {
+                if (studentStats[name]) {
+                    studentStats[name].totalAulas++;
+                    if (status.present) {
+                        studentStats[name].totalPresencas++;
+                    }
+                    if (status.pontualidade === 'atrasado') {
+                        studentStats[name].totalAtrasos++;
+                    }
+                    if (status.harmonia === 'conflituoso') {
+                        studentStats[name].totalConflitos++;
+                    }
+                    if (status.participacao === 'participativo') {
+                        studentStats[name].totalParticipativos++;
+                    }
+                }
+            });
+        });
+
+        let csvContent = `Turma: ${currentClassData.name}\n`;
+        csvContent += `Período: ${periodDisplay}\n`;
+        csvContent += `Total de Aulas Registradas: ${fetchedRecords.length}\n`;
+        csvContent += "Nome;Total Aulas;Total Presenças;Percentual Frequência;Total Atrasos;Total Conflituoso;Total Participativo\n";
+
+        Object.entries(studentStats).forEach(([name, stats]) => {
+            const freqPercent = stats.totalAulas > 0 ? ((stats.totalPresencas / stats.totalAulas) * 100).toFixed(1) : '0.0';
+
+            const row = [
+                `"${name}"`,
+                stats.totalAulas,
+                stats.totalPresencas,
+                `${freqPercent}%`,
+                stats.totalAtrasos,
+                stats.totalConflitos,
+                stats.totalParticipativos
+            ].join(';');
+
+            csvContent += row + "\n";
+        });
+
+        const filename = `${currentClassData.name}_Relatorio_${periodFileName}.csv`;
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showMessage(`Relatório exportado para CSV!`, 'success');
+        } else {
+            showMessage("Seu navegador não suporta download de arquivos.", 'error');
+        }
+    } catch (error) {
+        console.error("Erro ao exportar relatório:", error);
+        showMessage("Erro ao exportar relatório: " + error.message, 'error');
+    }
+}
+
+// ========================================
+// EVENTOS
+// ========================================
+
+closeMessageBtn.addEventListener('click', closeMessage);
+logoUploadInput.addEventListener('change', handleLogoUpload);
+
+// Eventos de Menu
+classesSelectEl.addEventListener('change', (e) => handleClassSelection(e.target.value));
+openAddClassBtn.addEventListener('click', () => showClassModal(false));
+openEditClassBtn.addEventListener('click', handleEditClassQuick);
+openDeleteClassQuickBtn.addEventListener('click', handleEditClassQuick);
+btnPreencherPresenca.addEventListener('click', () => navigateTo('presenca'));
+btnGerarRelatorio.addEventListener('click', () => navigateTo('relatorio'));
+
+// Eventos da Tela de Presença
+btnVoltarMenuPresenca.addEventListener('click', () => {
+    handleClassSelection(classesSelectEl.value);
+    navigateTo('menu');
+});
+dateInputEl.addEventListener('change', (e) => handleDateChange(e.target.value));
+saveAttendanceBtn.addEventListener('click', registerFrequency);
+exportCSVBtn.addEventListener('click', exportAttendanceToCSV);
+
+// Eventos da Tela de Relatório
+btnVoltarMenuRelatorio.addEventListener('click', () => {
+    handleClassSelection(classesSelectEl.value);
+    navigateTo('menu');
+});
+btnPeriodoSemanal.addEventListener('click', () => handlePeriodSelection('Semanal'));
+btnPeriodoMensal.addEventListener('click', () => handlePeriodSelection('Mensal'));
+semanaInputEl.addEventListener('change', updateWeekDisplay);
+btnGerarRelatorioFinal.addEventListener('click', generateReport);
+exportRelatorioBtn.addEventListener('click', exportReportToCSV);
+
+// Eventos do Modal
+cancelAddClassBtn.addEventListener('click', hideClassModal);
+saveClassBtn.addEventListener('click', saveClass);
+deleteClassBtn.addEventListener('click', deleteClass);
+studentListFileEl.addEventListener('change', handleStudentListFile);
+
+// ========================================
+// INICIALIZAÇÃO
+// ========================================
+
+// Data padrão e configuração inicial
+const today = new Date().toISOString().split('T')[0];
+dateInputEl.value = today;
+
+const todayISOWeek = getISOWeek(new Date());
+if (semanaInputEl) {
+    semanaInputEl.value = todayISOWeek;
+}
+handlePeriodSelection('Semanal');
+
+async function initializeAppAndAuth() {
+    try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(auth);
+        
+        await signInAnonymously(auth);
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdDisplayEl.textContent = `Usuário: ${userId.substring(0, 8)}...`;
+                loadingEl.classList.add('hidden');
+                menuInicialEl.classList.remove('hidden');
+                loadSavedLogo();
+                setupClassesListener();
+                
+                if (semanaDisplayEl) {
+                    updateWeekDisplay();
+                }
+            } else {
+                userIdDisplayEl.textContent = `Usuário: Desconectado`;
+                showMessage('Erro de autenticação. Recarregue a página.', 'error');
+            }
+        });
+    } catch (error) {
+        console.error("❌ Erro durante a inicialização:", error);
+        loadingEl.innerHTML = `<p class="text-red-600 text-center font-medium">Erro: ${error.message}</p>`;
+        showMessage('Erro ao conectar ao Firebase: ' + error.message, 'error');
+    }
+}
+
+initializeAppAndAuth();;
+        const presenceCheckbox = item.querySelector('.presence-checkbox');
         const pontualidade = item.querySelector('.pontualidade-select')?.value || "não observado";
         const harmonia = item.querySelector('.harmonia-select')?.value || "não observado";
         const participacao = item.querySelector('.participacao-select')?.value || "não observado";
 
         records[name] = {
             present: presenceCheckbox.checked,
-            // Usa os valores padronizados na leitura do DOM.
-            pontualidade: pontualidade === "" ? "não observado" : pontualidade, // Garante que o valor salvo seja "não observado" se o select estiver vazio
+            pontualidade: pontualidade === "" ? "não observado" : pontualidade,
             harmonia: harmonia === "" ? "não observado" : harmonia,
             participacao: participacao === "" ? "não observado" : participacao
         };
@@ -502,20 +946,19 @@ async function registerFrequency() {
         currentFrequencyDocId = dateString;
         saveAttendanceBtn.textContent = 'Atualizar Frequência';
         showMessage(`Frequência salva para ${dateString}!`);
-
     } catch (error) {
+        // ✅ CORREÇÃO: Reverte o texto do botão em caso de erro
+        saveAttendanceBtn.textContent = 'Salvar Frequência';
         console.error("Erro ao registrar frequência:", error);
         showMessage("Erro ao salvar: " + error.message, 'error');
     }
 }
 
-// --- RENDERIZAÇÃO E UI ---
+// ========================================
+// RENDERIZAÇÃO E NAVEGAÇÃO
+// ========================================
 
-/**
- * Controla a exibição das telas principais (Menu, Presença, Relatório).
- */
 function navigateTo(screenId) {
-// ... (código navigateTo mantido)
     menuInicialEl.classList.add('hidden');
     telaPresencaEl.classList.add('hidden');
     telaRelatorioEl.classList.add('hidden');
@@ -524,30 +967,25 @@ function navigateTo(screenId) {
         menuInicialEl.classList.remove('hidden');
     } else if (screenId === 'presenca') {
         telaPresencaEl.classList.remove('hidden');
-        // Se já tiver turma e data, carrega
         if (currentClassId && dateInputEl.value) {
-             loadFrequencyForDate(currentClassId, dateInputEl.value);
+            loadFrequencyForDate(currentClassId, dateInputEl.value);
         } else if (currentClassId) {
-            renderStudentList(currentClassData.students, {}); // Renderiza sem dados de frequência
+            renderStudentList(currentClassData.students, {});
         } else {
-            clearStudentList(); // Sem turma, limpa tudo.
+            clearStudentList();
         }
     } else if (screenId === 'relatorio') {
         telaRelatorioEl.classList.remove('hidden');
-        // Reseta o resultado do relatório ao entrar na tela
         relatorioResultadoEl.classList.add('hidden');
         relatorioConteudoEl.innerHTML = 'Preencha as configurações e clique em Gerar Relatório.';
-        // Garante que o display da semana esteja correto ao entrar na tela
         updateWeekDisplay();
     }
 }
 
 function updateClassSelects() {
-// ... (código updateClassSelects mantido)
-    // Tenta preservar a seleção atual
     const previouslySelectedClassId = classesSelectEl.value;
-
     classesSelectEl.innerHTML = '<option value="" disabled selected>-- Selecione uma Turma --</option>';
+    
     currentClasses.forEach(classData => {
         const option = document.createElement('option');
         option.value = classData.id;
@@ -555,22 +993,18 @@ function updateClassSelects() {
         classesSelectEl.appendChild(option);
     });
 
-    // Lógica para re-selecionar o ID da turma após a atualização da lista
     const newSelectionId = currentClassId || previouslySelectedClassId;
 
     if (newSelectionId && currentClasses.some(c => c.id === newSelectionId)) {
         classesSelectEl.value = newSelectionId;
-        currentClassId = newSelectionId; // Garante que o estado global esteja alinhado
+        currentClassId = newSelectionId;
         currentClassData = currentClasses.find(c => c.id === newSelectionId);
-        // Garante que a UI seja re-renderizada com a turma correta
         handleClassSelection(newSelectionId);
     } else {
-        // Se a turma ativa/anterior não existe mais, reseta o select e o estado.
         classesSelectEl.value = "";
         currentClassId = null;
         currentClassData = null;
         clearStudentList();
-        // Desativa botões de ação do Menu
         btnPreencherPresenca.disabled = true;
         btnGerarRelatorio.disabled = true;
         openEditClassBtn.classList.add('hidden');
@@ -579,7 +1013,6 @@ function updateClassSelects() {
 }
 
 function clearStudentList() {
-// ... (código clearStudentList mantido)
     studentsListContainerEl.innerHTML = `
         <p class="text-center text-gray-500 py-4">Selecione uma turma e data.</p>
     `;
@@ -591,25 +1024,22 @@ function clearStudentList() {
     openDeleteClassQuickBtn.classList.add('hidden');
 }
 
-/**
- * Renderiza a lista de alunos incluindo os campos opcionais.
- */
 function renderStudentList(students, records) {
-// ... (código renderStudentList mantido)
     studentsListContainerEl.innerHTML = '';
+    
     const listHtml = students.map((name, index) => {
-        // A regra é: se o registro existir e 'present' for false, é Ausente. Caso contrário, é Presente.
-        const record = records[name] || { present: true };
-        const isPresent = record.present !== false; // Se não for explicitamente 'false', é 'true'
+        // ✅ CORREÇÃO: Lógica simplificada de presença
+        const record = records[name];
+        const isPresent = record ? record.present : true; // Default: presente
+        
         const indexDisplay = index + 1;
         const studentRowClasses = isPresent ? 'bg-white' : 'bg-red-50';
         const switchBgColor = isPresent ? 'bg-primary' : 'bg-gray-200';
         const switchTranslate = isPresent ? 'translate-x-6' : 'translate-x-1';
 
-        // Critérios opcionais: valor salvo. Mapeia 'não observado' para a string vazia "" no select.
-        const pontualidadeValue = record.pontualidade && record.pontualidade !== "não observado" ? record.pontualidade : "";
-        const harmoniaValue = record.harmonia && record.harmonia !== "não observado" ? record.harmonia : "";
-        const participacaoValue = record.participacao && record.participacao !== "não observado" ? record.participacao : "";
+        const pontualidadeValue = record?.pontualidade && record.pontualidade !== "não observado" ? record.pontualidade : "";
+        const harmoniaValue = record?.harmonia && record.harmonia !== "não observado" ? record.harmonia : "";
+        const participacaoValue = record?.participacao && record.participacao !== "não observado" ? record.participacao : "";
 
         return `
             <li data-student-name="${name}" class="student-item ${studentRowClasses} p-3 rounded-lg transition-colors duration-300 border-b border-gray-100 last:border-0">
@@ -667,7 +1097,6 @@ function renderStudentList(students, records) {
 }
 
 window.handlePresenceChange = function(checkbox) {
-// ... (código handlePresenceChange mantido)
     const studentItem = checkbox.closest('.student-item');
     const isPresent = checkbox.checked;
     const switchBg = checkbox.nextElementSibling;
@@ -693,8 +1122,11 @@ window.handlePresenceChange = function(checkbox) {
     }
 }
 
+// ========================================
+// EXPORTAÇÃO CSV
+// ========================================
+
 function exportAttendanceToCSV() {
-// ... (código exportAttendanceToCSV mantido)
     if (!currentClassId || !dateInputEl.value) {
         showMessage("Nenhuma frequência carregada para exportar.", 'error');
         return;
@@ -704,489 +1136,9 @@ function exportAttendanceToCSV() {
     const className = currentClassData.name;
     const studentItems = studentsListContainerEl.querySelectorAll('.student-item');
 
-    // NOVAS LINHAS: Nome da Turma e Data no topo do arquivo
     let csvContent = `Turma: ${className}\n`;
     csvContent += `Data: ${dateString}\n`;
-
-    // 1. Cabeçalho das Colunas
     csvContent += "Nome;Presente;Pontualidade;Harmonia;Participação\n";
 
-    // 2. Linhas de dados
     studentItems.forEach(item => {
-        const name = item.dataset.studentName;
-        const presenceCheckbox = item.querySelector('.presence-checkbox');
-        const isPresent = presenceCheckbox.checked ? "SIM" : "NÃO";
-
-        // Critérios
-        const pontualidade = item.querySelector('.pontualidade-select')?.value || "";
-        const harmonia = item.querySelector('.harmonia-select')?.value || "";
-        const participacao = item.querySelector('.participacao-select')?.value || "";
-
-        // Mapeia o valor "" para a string "Não Observado" para o CSV
-        const getDisplayValue = (value) => value === "" ? "Não Observado" : value.charAt(0).toUpperCase() + value.slice(1);
-
-        // Formato CSV com separador ';'
-        const row = [
-            `"${name}"`, // Envolve o nome em aspas para evitar problemas
-            isPresent,
-            getDisplayValue(pontualidade),
-            getDisplayValue(harmonia),
-            getDisplayValue(participacao)
-        ].join(';');
-
-        csvContent += row + "\n";
-    });
-
-    // 3. Criação e Download do arquivo
-    const filename = `${className}_Frequencia_${dateString}.csv`;
-    // Adiciona o charset utf-8 com BOM (Byte Order Mark) para garantir caracteres especiais (acentos) corretos no Excel
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-
-    if (link.download !== undefined) { // Browser support
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showMessage(`Exportação para CSV de "${className}" concluída!`);
-    } else {
-        showMessage("Seu navegador não suporta download de arquivos.", 'error');
-    }
-}
-
-// --- LÓGICA DE NAVEGAÇÃO E SELEÇÃO DE TURMA ---
-
-function handleClassSelection(classId) {
-// ... (código handleClassSelection mantido)
-    // Se o valor for nulo ou vazio (que é o valor de "-- Selecione uma Turma --")
-    if (!classId || classId === "") {
-        currentClassId = null;
-        currentClassData = null;
-        clearStudentList(); // Limpa a lista, botões e estado
-
-        // Desativa botões de ação do Menu
-        btnPreencherPresenca.disabled = true;
-        btnGerarRelatorio.disabled = true;
-        openEditClassBtn.classList.add('hidden');
-        openDeleteClassQuickBtn.classList.add('hidden');
-        return;
-    }
-
-    const selectedClass = currentClasses.find(c => c.id === classId);
-    if (!selectedClass) {
-        // Isso não deve acontecer se a lista de classes foi atualizada corretamente
-        currentClassId = null;
-        currentClassData = null;
-        clearStudentList();
-        btnPreencherPresenca.disabled = true;
-        btnGerarRelatorio.disabled = true;
-        openEditClassBtn.classList.add('hidden');
-        openDeleteClassQuickBtn.classList.add('hidden');
-        return;
-    }
-
-    // Mantém a turma selecionada
-    currentClassId = classId;
-    currentClassData = selectedClass;
-
-    // Ativa botões de ação do Menu
-    btnPreencherPresenca.disabled = false;
-    btnGerarRelatorio.disabled = false;
-
-    // Mostra os botões de edição e exclusão rápida
-    openEditClassBtn.classList.remove('hidden');
-    openDeleteClassQuickBtn.classList.remove('hidden');
-
-    // Se estiver na tela de presença, carrega os dados
-    if (!telaPresencaEl.classList.contains('hidden') && dateInputEl.value) {
-        loadFrequencyForDate(currentClassId, dateInputEl.value);
-    } else if (!telaPresencaEl.classList.contains('hidden')) {
-        renderStudentList(currentClassData.students, {});
-    }
-}
-
-function handleDateChange(dateString) {
-// ... (código handleDateChange mantido)
-    if (!currentClassId) {
-        showMessage("Selecione uma turma primeiro.", 'error');
-        dateInputEl.value = '';
-        return;
-    }
-    if (dateString) {
-        loadFrequencyForDate(currentClassId, dateString);
-    } else {
-        renderStudentList(currentClassData.students, {});
-    }
-}
-
-function handleEditClassQuick() {
-// ... (código handleEditClassQuick mantido)
-    if (currentClassId && currentClassData) {
-        // Abre o modal em modo de edição, com os dados da turma selecionada
-        showClassModal(true, currentClassData);
-    } else {
-        showMessage("Selecione uma turma para editar.", 'error');
-    }
-}
-
-// --- LÓGICA DA TELA DE RELATÓRIO ---
-
-function handlePeriodSelection(period) {
-// ... (código handlePeriodSelection mantido)
-    selectedReportPeriod = period;
-
-    btnPeriodoSemanal.classList.remove('bg-white', 'border-primary', 'text-primary', 'border-gray-300', 'text-gray-700');
-    btnPeriodoMensal.classList.remove('bg-white', 'border-primary', 'text-primary', 'border-gray-300', 'text-gray-700');
-
-    if (period === 'Semanal') {
-        btnPeriodoSemanal.classList.add('bg-white', 'border-primary', 'text-primary');
-        btnPeriodoMensal.classList.add('bg-white', 'border-gray-300', 'text-gray-700');
-        periodoSemanalConfig.classList.remove('hidden');
-        periodoMensalConfig.classList.add('hidden');
-    } else {
-        btnPeriodoMensal.classList.add('bg-white', 'border-primary', 'text-primary');
-        btnPeriodoSemanal.classList.add('bg-white', 'border-gray-300', 'text-gray-700');
-        periodoSemanalConfig.classList.add('hidden');
-        periodoMensalConfig.classList.remove('hidden');
-    }
-    relatorioResultadoEl.classList.add('hidden');
-}
-
-
-async function generateReport() {
-    if (!currentClassId) {
-        showMessage("Selecione uma turma no menu inicial.", 'error');
-        return;
-    }
-
-    let startDate, endDate, periodDisplay, periodFileName;
-
-    if (selectedReportPeriod === 'Semanal') {
-        const weekValue = semanaInputEl.value;
-        if (!weekValue) {
-            showMessage("Selecione uma semana.", 'error');
-            return;
-        }
-
-        const weekRange = getDateRangeOfWeek(weekValue);
-        startDate = weekRange.startDate;
-        endDate = weekRange.endDate;
-        periodDisplay = weekRange.display;
-        periodFileName = weekValue;
-
-        if (!startDate || !endDate) {
-            showMessage("Erro ao calcular o período da semana. Verifique a seleção.", 'error');
-            return;
-        }
-
-    } else { // Mensal
-        const monthValue = mesInputEl.value;
-        if (!monthValue) {
-            showMessage("Selecione um mês.", 'error');
-            return;
-        }
-        const [year, month] = monthValue.split('-');
-        startDate = `${year}-${month}-01`;
-        // Calcula o último dia do mês
-        endDate = new Date(year, month, 0).toISOString().split('T')[0];
-        periodDisplay = `Mês: ${monthValue}`;
-        periodFileName = monthValue;
-    }
-
-    const frequencyPath = getFrequencyCollectionPath(currentClassId);
-    if (!frequencyPath) return;
-
-    try {
-        // Busca TODOS os documentos de frequência da turma (para filtrar em memória)
-        const q = query(collection(db, frequencyPath));
-        const snapshot = await getDocs(q);
-
-        // Filtra os registros que estão dentro do intervalo de datas (incluso)
-        const allRecords = snapshot.docs
-            .map(doc => doc.data())
-            .filter(data => data.date >= startDate && data.date <= endDate);
-
-        if (allRecords.length === 0) {
-            relatorioConteudoEl.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum registro de frequência encontrado para o período ${periodDisplay}.</p>`;
-            relatorioResultadoEl.classList.remove('hidden');
-            exportRelatorioBtn.disabled = true;
-            showMessage("Nenhum dado encontrado para o relatório.", 'info');
-            return;
-        }
-
-        // Lógica de Agregação
-        const studentStats = {};
-        currentClassData.students.forEach(name => {
-            studentStats[name] = { totalAulas: 0, totalPresencas: 0, totalAtrasos: 0, totalConflitos: 0, totalParticipativos: 0 };
-        });
-
-        allRecords.forEach(record => {
-            Object.entries(record.records).forEach(([name, status]) => {
-                if (studentStats[name]) {
-                    studentStats[name].totalAulas++;
-                    if (status.present) {
-                        studentStats[name].totalPresencas++;
-                    }
-                    if (status.pontualidade === 'atrasado') {
-                        studentStats[name].totalAtrasos++;
-                    }
-                    if (status.harmonia === 'conflituoso') {
-                        studentStats[name].totalConflitos++;
-                    }
-                    if (status.participacao === 'participativo') {
-                        studentStats[name].totalParticipativos++;
-                    }
-                }
-            });
-        });
-
-        // Monta o HTML do Relatório
-        let reportHtml = `
-            <h4 class="text-lg font-semibold text-gray-800 mb-2">Turma: ${currentClassData.name}</h4>
-            <p class="text-sm text-gray-600 mb-4">Período: ${periodDisplay}</p>
-            <p class="text-sm text-gray-600 mb-4">Total de Aulas Registradas no Período: <span class="font-bold text-primary">${allRecords.length}</span></p>
-            <div class="space-y-4">
-        `;
-
-        Object.entries(studentStats).forEach(([name, stats]) => {
-            const freqPercent = stats.totalAulas > 0 ? ((stats.totalPresencas / stats.totalAulas) * 100).toFixed(1) : 0;
-            const presenceColor = freqPercent < 75 ? 'text-red-600 font-bold' : 'text-green-600 font-bold';
-
-            reportHtml += `
-                <div class="p-3 border rounded-lg shadow-sm bg-gray-50">
-                    <p class="font-bold text-gray-900">${name}</p>
-                    <p class="text-sm mt-1">
-                        Frequência: <span class="${presenceColor}">${stats.totalPresencas} / ${stats.totalAulas} (${freqPercent}%)</span>
-                    </p>
-                    <p class="text-xs text-gray-600">Atrasos: ${stats.totalAtrasos} | Conflituoso: ${stats.totalConflitos} | Participativo: ${stats.totalParticipativos}</p>
-                </div>
-            `;
-        });
-
-        reportHtml += '</div>';
-
-        relatorioConteudoEl.innerHTML = reportHtml;
-        relatorioResultadoEl.classList.remove('hidden');
-        exportRelatorioBtn.disabled = false;
-        showMessage("Relatório gerado com sucesso!", 'success');
-
-    } catch (error) {
-        console.error("Erro ao gerar relatório:", error);
-        showMessage("Erro ao gerar relatório: " + error.message, 'error');
-        relatorioConteudoEl.innerHTML = `<p class="text-center text-red-500 py-4">Erro ao carregar dados.</p>`;
-        relatorioResultadoEl.classList.remove('hidden');
-    }
-}
-
-function exportReportToCSV() {
-    if (!currentClassId || relatorioResultadoEl.classList.contains('hidden')) {
-        showMessage("Nenhum relatório carregado para exportar.", 'error');
-        return;
-    }
-
-    let startDate, endDate, periodDisplay, periodFileName;
-
-    if (selectedReportPeriod === 'Semanal') {
-        const weekValue = semanaInputEl.value;
-        if (!weekValue) {
-            showMessage("Selecione uma semana.", 'error');
-            return;
-        }
-
-        const weekRange = getDateRangeOfWeek(weekValue);
-        startDate = weekRange.startDate;
-        endDate = weekRange.endDate;
-        periodDisplay = weekRange.display;
-        periodFileName = weekValue;
-
-        if (!startDate || !endDate) {
-            showMessage("Erro ao calcular o período da semana para exportação.", 'error');
-            return;
-        }
-
-    } else { // Mensal
-        const monthValue = mesInputEl.value;
-        if (!monthValue) {
-            showMessage("Selecione um mês.", 'error');
-            return;
-        }
-        const [year, month] = monthValue.split('-');
-        startDate = `${year}-${month}-01`;
-        endDate = new Date(year, month, 0).toISOString().split('T')[0];
-        periodDisplay = `Mês: ${monthValue}`;
-        periodFileName = monthValue;
-    }
-
-    const frequencyPath = getFrequencyCollectionPath(currentClassId);
-    if (!frequencyPath) return;
-
-    // Repete a busca e agregação
-    getDocs(query(collection(db, frequencyPath))).then(snapshot => {
-        const fetchedRecords = snapshot.docs
-            .map(doc => doc.data())
-            .filter(data => data.date >= startDate && data.date <= endDate);
-
-        const studentStats = {};
-        currentClassData.students.forEach(name => {
-            studentStats[name] = { totalAulas: 0, totalPresencas: 0, totalAtrasos: 0, totalConflitos: 0, totalParticipativos: 0 };
-        });
-
-        fetchedRecords.forEach(record => {
-            Object.entries(record.records).forEach(([name, status]) => {
-                if (studentStats[name]) {
-                    studentStats[name].totalAulas++;
-                    if (status.present) {
-                        studentStats[name].totalPresencas++;
-                    }
-                    if (status.pontualidade === 'atrasado') {
-                        studentStats[name].totalAtrasos++;
-                    }
-                    if (status.harmonia === 'conflituoso') {
-                        studentStats[name].totalConflitos++;
-                    }
-                    if (status.participacao === 'participativo') {
-                        studentStats[name].totalParticipativos++;
-                    }
-                }
-            });
-        });
-
-        // 1. Geração do CSV
-        let csvContent = `Turma: ${currentClassData.name}\n`;
-        csvContent += `Período: ${periodDisplay}\n`;
-        csvContent += `Total de Aulas Registradas: ${fetchedRecords.length}\n`;
-        csvContent += "Nome;Total Aulas;Total Presenças;Percentual Frequência;Total Atrasos;Total Conflituoso;Total Participativo\n";
-
-        Object.entries(studentStats).forEach(([name, stats]) => {
-            const freqPercent = stats.totalAulas > 0 ? ((stats.totalPresencas / stats.totalAulas) * 100).toFixed(1) : '0.0';
-
-            const row = [
-                `"${name}"`,
-                stats.totalAulas,
-                stats.totalPresencas,
-                `${freqPercent}%`,
-                stats.totalAtrasos,
-                stats.totalConflitos,
-                stats.totalParticipativos
-            ].join(';');
-
-            csvContent += row + "\n";
-        });
-
-        // 2. Criação e Download do arquivo
-        const filename = `${currentClassData.name}_Relatorio_${periodFileName}.csv`;
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showMessage(`Relatório exportado para CSV!`, 'success');
-        } else {
-            showMessage("Seu navegador não suporta download de arquivos.", 'error');
-        }
-
-    }).catch(error => {
-        console.error("Erro ao exportar relatório:", error);
-        showMessage("Erro ao exportar relatório: " + error.message, 'error');
-    });
-}
-
-
-// --- EVENTOS ---
-
-closeMessageBtn.addEventListener('click', closeMessage);
-logoUploadInput.addEventListener('change', handleLogoUpload);
-
-// Eventos de Menu
-classesSelectEl.addEventListener('change', (e) => handleClassSelection(e.target.value));
-openAddClassBtn.addEventListener('click', () => showClassModal(false));
-openEditClassBtn.addEventListener('click', handleEditClassQuick);
-openDeleteClassQuickBtn.addEventListener('click', handleEditClassQuick); // Abre modal de edição para confirmar exclusão
-btnPreencherPresenca.addEventListener('click', () => navigateTo('presenca'));
-btnGerarRelatorio.addEventListener('click', () => navigateTo('relatorio'));
-
-// Eventos da Tela de Presença
-btnVoltarMenuPresenca.addEventListener('click', () => {
-    // Garante que o estado de classe selecionada está correto ao voltar
-    handleClassSelection(classesSelectEl.value);
-    navigateTo('menu');
-});
-dateInputEl.addEventListener('change', (e) => handleDateChange(e.target.value));
-saveAttendanceBtn.addEventListener('click', registerFrequency);
-exportCSVBtn.addEventListener('click', exportAttendanceToCSV);
-
-
-// Eventos da Tela de Relatório
-btnVoltarMenuRelatorio.addEventListener('click', () => {
-    // Garante que o estado de classe selecionada está correto ao voltar
-    handleClassSelection(classesSelectEl.value);
-    navigateTo('menu');
-});
-btnPeriodoSemanal.addEventListener('click', () => handlePeriodSelection('Semanal'));
-btnPeriodoMensal.addEventListener('click', () => handlePeriodSelection('Mensal'));
-// NOVO: Adiciona listener para a mudança do input de semana
-semanaInputEl.addEventListener('change', updateWeekDisplay);
-btnGerarRelatorioFinal.addEventListener('click', generateReport);
-exportRelatorioBtn.addEventListener('click', exportReportToCSV);
-
-
-// Eventos do Modal
-cancelAddClassBtn.addEventListener('click', hideClassModal);
-saveClassBtn.addEventListener('click', saveClass);
-deleteClassBtn.addEventListener('click', deleteClass);
-studentListFileEl.addEventListener('change', handleStudentListFile);
-
-
-// Data padrão (hoje) e período de relatório inicial
-const today = new Date().toISOString().split('T')[0];
-dateInputEl.value = today;
-
-// NOVO: Define a semana atual como padrão e exibe o intervalo
-const todayISOWeek = getISOWeek(new Date());
-if (semanaInputEl) {
-    semanaInputEl.value = todayISOWeek;
-}
-handlePeriodSelection('Semanal'); // Configura o estado inicial do relatório (vai chamar updateWeekDisplay ao entrar na tela)
-
-// --- INICIALIZAÇÃO ---
-
-async function initializeAppAndAuth() {
-    try {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-        await signInAnonymously(auth);
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                userId = user.uid;
-                userIdDisplayEl.textContent = `Usuário: ${userId.substring(0, 8)}...`;
-                loadingEl.classList.add('hidden');
-                menuInicialEl.classList.remove('hidden'); // Exibe o menu principal
-                loadSavedLogo();
-                setupClassesListener();
-                // Chama updateWeekDisplay para exibir o valor inicial da semana
-                if (semanaDisplayEl) {
-                    updateWeekDisplay();
-                }
-            } else {
-                userIdDisplayEl.textContent = `Usuário: Desconectado`;
-                showMessage('Erro de autenticação. Recarregue a página.', 'error');
-            }
-        });
-    } catch (error) {
-        console.error("❌ Erro durante a inicialização:", error);
-        loadingEl.innerHTML = `<p class="text-red-600 text-center font-medium">Erro: ${error.message}</p>`;
-        showMessage('Erro ao conectar ao Firebase: ' + error.message, 'error');
-    }
-}
-
-initializeAppAndAuth();
+        const name = item.dataset.studentName
