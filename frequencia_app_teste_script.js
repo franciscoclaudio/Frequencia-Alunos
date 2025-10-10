@@ -26,7 +26,7 @@ let currentClassData = null;
 let currentFrequencyDocId = null;
 let selectedReportPeriod = 'Semanal'; // Padrão: Semanal
 
-// --- ELEMENTOS DO DOM (Ajustados ao HTML) ---
+// --- ELEMENTOS DO DOM (Ajustados para o layout com menus) ---
 const loadingEl = document.getElementById('loadingIndicator');
 // appContentEl não existe no HTML, o conteúdo está dentro de .container-app
 const userIdDisplayEl = document.getElementById('userIdDisplay');
@@ -379,8 +379,11 @@ async function saveClass() {
     }
 }
 
+/**
+ * FUNÇÃO DELETAR TURMA VERIFICADA E CORRETA.
+ * Ela usa currentClassId para garantir que apenas a turma selecionada seja excluída.
+ */
 async function deleteClass() {
-// ... (código deleteClass mantido)
     if (!currentClassId) return;
     if (!window.confirm(`Excluir a turma "${classNameInputEl.value.trim()}" e todos os registros? IRREVERSÍVEL!`)) {
         return;
@@ -388,8 +391,9 @@ async function deleteClass() {
     const classesPath = getClassCollectionPath();
     if (!classesPath) return;
     try {
+        // 1. Apaga os registros de frequência (subcoleção) APENAS da turma selecionada
         const frequencyPath = getFrequencyCollectionPath(currentClassId);
-        const q = query(collection(db, frequencyPath));
+        const q = query(collection(db, frequencyPath)); 
         const snapshot = await getDocs(q);
 
         const deletePromises = snapshot.docs.map(docToDelete =>
@@ -397,6 +401,7 @@ async function deleteClass() {
         );
         await Promise.all(deletePromises);
 
+        // 2. Apaga o documento principal da turma (o doc) APENAS da turma selecionada
         const classDocRef = doc(db, classesPath, currentClassId);
         await deleteDoc(classDocRef);
 
@@ -876,7 +881,7 @@ async function generateReport() {
             showMessage("Erro ao calcular o período da semana. Verifique a seleção.", 'error');
             return;
         }
-        
+
     } else { // Mensal
         const monthValue = mesInputEl.value;
         if (!monthValue) {
@@ -1147,7 +1152,9 @@ dateInputEl.value = today;
 
 // NOVO: Define a semana atual como padrão e exibe o intervalo
 const todayISOWeek = getISOWeek(new Date());
-semanaInputEl.value = todayISOWeek;
+if (semanaInputEl) {
+    semanaInputEl.value = todayISOWeek;
+}
 handlePeriodSelection('Semanal'); // Configura o estado inicial do relatório (vai chamar updateWeekDisplay ao entrar na tela)
 
 // --- INICIALIZAÇÃO ---
@@ -1167,7 +1174,9 @@ async function initializeAppAndAuth() {
                 loadSavedLogo();
                 setupClassesListener();
                 // Chama updateWeekDisplay para exibir o valor inicial da semana
-                updateWeekDisplay();
+                if (semanaDisplayEl) {
+                    updateWeekDisplay();
+                }
             } else {
                 userIdDisplayEl.textContent = `Usuário: Desconectado`;
                 showMessage('Erro de autenticação. Recarregue a página.', 'error');
