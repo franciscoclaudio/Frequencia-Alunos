@@ -817,8 +817,19 @@ function handleDateChange(dateString) {
     }
 }
 
+function handleDeleteClassQuick() {
+    // 1a. Verifica se uma turma está selecionada
+    if (!currentClassId || !currentClassData) {
+        showMessage("Selecione uma turma para excluir.", 'error');
+        return;
+    }
+    
+    // 1b. Chama a função de exclusão existente que já contém o window.confirm()
+    // A função deleteClass() irá perguntar ao usuário: "Tem certeza que deseja excluir esta turma?..."
+    deleteClass();
+}
+
 function handleEditClassQuick() {
-// ... (código handleEditClassQuick mantido)
     if (currentClassId && currentClassData) {
         // Abre o modal em modo de edição, com os dados da turma selecionada
         showClassModal(true, currentClassData);
@@ -1108,7 +1119,7 @@ openAddClassBtn.addEventListener('click', () => {
     currentClassId = null; 
     showClassModal(false);
 });
-openDeleteClassQuickBtn.addEventListener('click', handleEditClassQuick); // Abre modal de edição para confirmar exclusão
+openDeleteClassQuickBtn.addEventListener('click', handleDeleteClassQuick); // Abre modal de edição para confirmar exclusão
 btnPreencherPresenca.addEventListener('click', () => navigateTo('presenca'));
 btnGerarRelatorio.addEventListener('click', () => navigateTo('relatorio'));
 
