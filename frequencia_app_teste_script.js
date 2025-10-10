@@ -1103,7 +1103,7 @@ logoUploadInput.addEventListener('change', handleLogoUpload);
 
 // Eventos de Menu
 classesSelectEl.addEventListener('change', (e) => handleClassSelection(e.target.value));
-openAddClassBtn.addEventListener('click', () => showClassModal(false));
+openAddClassBtn.addEventListener('click', () => { currentClassId = null; showClassModal(false); });
 openEditClassBtn.addEventListener('click', handleEditClassQuick);
 openDeleteClassQuickBtn.addEventListener('click', handleEditClassQuick); // Abre modal de edição para confirmar exclusão
 btnPreencherPresenca.addEventListener('click', () => navigateTo('presenca'));
