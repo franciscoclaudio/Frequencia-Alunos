@@ -385,7 +385,7 @@ async function deleteClass() {
     const className = currentClassData.name.toUpperCase();
     
     // 2. Monta a mensagem usando Maiúsculas e Símbolos
-    if (!window.confirm(`\n⚠️ EXCLUIR TURMA: "${className}"\n\nConfirma a exclusão desta turma e de todos os seus registros de frequência? ESTA AÇÃO É IRREVERSÍVEL!`)) {
+    if (!window.confirm(`⚠️ EXCLUIR TURMA: "${className}"\n\nConfirma a exclusão desta turma e de todos os seus registros de frequência? ESTA AÇÃO É IRREVERSÍVEL!`)) {
         return;
     }
     const classesPath = getClassCollectionPath();
