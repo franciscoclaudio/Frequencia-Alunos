@@ -380,9 +380,12 @@ async function saveClass() {
 }
 
 async function deleteClass() {
-// ... (código deleteClass mantido)
-    if (!currentClassId) return;
-    if (!window.confirm(`Excluir a turma "${classNameInputEl.value.trim()}" e todos os registros? IRREVERSÍVEL!`)) {
+    if (!currentClassId || !currentClassData) return;
+    
+    // CORREÇÃO: Pega o nome da turma da variável de estado global
+    const className = currentClassData.name; 
+
+    if (!window.confirm(`Excluir a turma "${className}" e todos os registros? IRREVERSÍVEL!`)) {
         return;
     }
     const classesPath = getClassCollectionPath();
