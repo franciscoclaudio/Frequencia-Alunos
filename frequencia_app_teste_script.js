@@ -381,11 +381,11 @@ async function saveClass() {
 
 async function deleteClass() {
     if (!currentClassId || !currentClassData) return;
+    // 1. Pega o nome da turma e converte para MAIÚSCULAS para dar ênfase
+    const className = currentClassData.name.toUpperCase();
     
-    // CORREÇÃO: Pega o nome da turma da variável de estado global
-    const className = currentClassData.name; 
-
-    if (!window.confirm(`Excluir a turma "${className}" e todos os registros? IRREVERSÍVEL!`)) {
+    // 2. Monta a mensagem usando Maiúsculas e Símbolos
+    if (!window.confirm(`⚠️ EXCLUIR TURMA: "${className}"\n\nConfirma a exclusão desta turma e de todos os seus registros de frequência? ESTA AÇÃO É IRREVERSÍVEL!`)) {
         return;
     }
     const classesPath = getClassCollectionPath();
