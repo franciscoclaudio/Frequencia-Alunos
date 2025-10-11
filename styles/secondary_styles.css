@@ -34,11 +34,11 @@
         .container {
             background: white;
             border-radius: 16px;
-            /* Sombra mais suave e elevada */
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); /* Aumentei a sombra para destacar no fundo escuro */
-            max-width: 400px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            max-width: 800px; /* ← Aumentar para dar espaço ao fundo */
             width: 100%;
             padding: 40px 30px;
+            margin: 20px auto; /* ← Adicionar margem para ver o fundo */
         }
         
         /* Título - Alterado para ser AZUL (var(--color-primary)) */
