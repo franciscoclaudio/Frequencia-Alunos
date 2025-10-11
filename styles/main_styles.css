@@ -1,0 +1,133 @@
+/*
+ * Arquivo CSS Unificado
+ * Contém todos os estilos customizados para o projeto Frequencia-Alunos.
+ * A maior parte do visual é controlada pelo Tailwind CSS no HTML.
+ */
+
+/* Estilos de Layout Principal */
+.container-app {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 1rem;
+}
+
+/* Estilo para a lista de alunos (para permitir scroll) */
+.scrollable-content {
+    /* Define a altura máxima para permitir a rolagem vertical, mantendo a consistência */
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+/* Esconde o checkbox nativo do switch de presença */
+.presence-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Estilos para Upload de Logo e Lista de Alunos */
+label[for="logoUpload"],
+label[for="studentListFile"] {
+    cursor: pointer;
+    text-decoration: underline;
+    color: #4f46e5; /* Indigo */
+    transition: color 0.2s;
+}
+
+label[for="logoUpload"]:hover,
+label[for="studentListFile"]:hover {
+    color: #312e81; /* Indigo-900 */
+    text-decoration: underline wavy;
+}
+
+/* Input file escondido (logo e lista .txt) */
+#logoUpload,
+#studentListFile {
+    display: none;
+}
+
+/* Switch customizado de Presença */
+.student-item .presence-checkbox:checked + .block {
+    background-color: #4f46e5 !important; /* Indigo - Ligado */
+}
+.student-item .presence-checkbox:not(:checked) + .block {
+    background-color: #e5e7eb !important; /* Gray-200 - Desligado */
+}
+.student-item .dot {
+    transition: transform 0.3s;
+}
+
+/* Botões desabilitados (Consistência visual) */
+button:disabled,
+button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Estilo para a mensagem de Toast (Notificação) */
+#messageToast {
+    z-index: 9999; /* Garante que a notificação fica acima de outros elementos */
+}
+
+/* Modal animação opcional */
+#addClassModal {
+    transition: opacity 0.3s;
+}
+
+/* Selects dos critérios de aluno (pontualidade, harmonia, participação) */
+.student-item select {
+    min-width: 110px;
+    background-color: #f3f4f6; /* gray-100 */
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 6px;
+    font-size: 0.95em;
+    padding: 2px 8px;
+    margin-right: 4px;
+    margin-top: 2px;
+    transition: border-color 0.2s;
+}
+
+.student-item select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    background-color: #fff;
+}
+
+/* Label dos selects */
+.student-item label.text-xs {
+    margin-right: 8px;
+    margin-bottom: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Responsividade para os critérios em telas pequenas (Força o empilhamento) */
+@media (max-width: 640px) {
+    .student-item .flex-col.md\:flex-row {
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+}
+
+/* Estilos da Imagem do Logo (Aumenta o tamanho) */
+#logoImg {
+    width: 80px !important;
+    height: 80px !important;
+    min-width: 80px !important;
+    min-height: 80px !important;
+    max-width: 100px;
+    max-height: 100px;
+}
+
+/* Estilos para os Ícones SVG nos Botões (Garante visibilidade) */
+#btnPreencherPresenca svg,
+#btnGerarRelatorio svg {
+    stroke: white !important; /* Garante que o ícone é branco */
+    display: block !important;
+    width: 48px !important; 
+    height: 48px !important;
+}
