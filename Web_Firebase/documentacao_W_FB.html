@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação — Controle de Frequência de Alunos — Firebase Web App</title>
+    <style>
+        :root {
+            --color-primary: #4f46e5;
+            --color-secondary: #8b5cf6;
+            --color-pink: #ec4899;
+            --color-red: #ef4444;
+            --color-green: #10b981;
+            --color-dark-green: #059669;
+            --color-bg-light: #f9fafb;
+            --color-text-dark: #1f2937;
+            --color-text-light: #374151;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--color-bg-light);
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px 30px;
+            color: var(--color-text-dark);
+            overflow-x: auto;
+        }
+        h1 {
+            color: var(--color-primary);
+            font-size: 1.6em;
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: 700;
+        }
+        h2, h3 {
+            color: var(--color-text-light);
+            margin-top: 2em;
+            margin-bottom: 0.5em;
+        }
+        h2 {
+            font-size: 1.2em;
+        }
+        h3 {
+            font-size: 1em;
+        }
+        ul, ol {
+            margin-left: 1.4em;
+            margin-bottom: 1em;
+        }
+        li {
+            margin-bottom: 0.3em;
+        }
+        code, pre {
+            background: #f3f4f6;
+            color: #1f2937;
+            border-radius: 5px;
+            padding: 2px 6px;
+            font-size: 0.95em;
+        }
+        pre {
+            padding: 10px;
+            overflow-x: auto;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 2em 0;
+        }
+        a {
+            color: var(--color-primary);
+            text-decoration: underline;
+        }
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 1em;
+        }
+        .badge-list img {
+            vertical-align: middle;
+            height: 22px;
+        }
+        strong {
+            font-weight: 600;
+        }
+        p {
+            margin-bottom: 1em;
+        }
+        
+        /* Ajuste para cabeçalho do projeto */
+        .project-title {
+            color: var(--color-primary);
+            font-size: 1.6em;
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: 700;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px 10px;
+            }
+            .project-title {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="project-title">Controle de Frequência de Alunos — Firebase Web App</h1>
+        
+
+<p>Este projeto é uma aplicação web para <strong>registro e análise de frequência de alunos</strong>, desenvolvida com o <a href="https://firebase.google.com/products/firestore" target="_blank">Firebase Firestore</a> e JavaScript puro, e estilizada com <a href="https://tailwindcss.com/" target="_blank">TailwindCSS</a>.</p>
+<p>Permite gerenciar turmas, registrar presença diária, exportar dados em CSV e gerar relatórios semanais/mensais de frequência, atrasos, harmonia e participação.</p>
+
+<h2>Funcionalidades</h2>
+
+<ul>
+<li><strong>Autenticação anônima Firebase:</strong> Cada usuário recebe um ID exclusivo para suas turmas.</li>
+<li><strong>Cadastro e edição de Turmas:</strong> Adicione, edite ou exclua turmas e listas de alunos (importação .txt).</li>
+<li><strong>Registro de Presença:</strong> Selecione a data, marque presença/ausência, e registre critérios opcionais (pontualidade, harmonia, participação).</li>
+<li><strong>Exportação CSV:</strong> Baixe a frequência do dia da turma em CSV, compatível com Excel.</li>
+<li><strong>Relatórios Semanais e Mensais:</strong> Gere relatórios detalhados com percentuais de presença, atrasos, conflitos e participação.</li>
+<li><strong>Exportação de Relatórios:</strong> Baixe o relatório do período selecionado em CSV.</li>
+<li><strong>Interface intuitiva:</strong> Visual moderno, responsivo, com notificações e modais.</li>
+</ul>
+<h2>Como usar</h2>
+
+<p>1. <strong>Clone ou baixe este repositório.</strong></p>
+<p>2. Coloque os arquivos na pasta desejada do seu servidor ou execute localmente.</p>
+<p>3. Altere as credenciais do Firebase em <code>Web_Firebase/frequencia_app_teste_script.js</code> (<code>firebaseConfig</code>) se desejar usar seu próprio projeto Firebase.</p>
+<p>4. Abra o arquivo <code>Web_Firebase/frequencia_app_teste.html</code> em seu navegador.</p>
+
+<p>> <strong>Não é necessário backend próprio</strong> — o Firestore armazena todos os dados no seu projeto Firebase.</p>
+
+<h2>Estrutura de arquivos</h2>
+
+<p>```text</p>
+<p>Web_Firebase/</p>
+<p>├── frequencia_app_teste.html          # Página principal da aplicação</p>
+<p>├── frequencia_app_teste_script.js     # Lógica JavaScript e integração Firebase</p>
+<p>├── frequencia_app_teste_styles.css    # Estilos customizados (além do Tailwind)</p>
+<p>├── img/</p>
+<p>│   └── Logo_W_FB.png                 # Imagem padrão do logo do app</p>
+<p>```</p>
+
+<h2>Principais comandos e telas</h2>
+
+<ul>
+<li><strong>Adicionar Nova Turma:</strong> Preencha o nome, cole/importar lista de alunos (.txt).</li>
+<li><strong>Editar/Excluir Turma:</strong> Botões visíveis ao selecionar uma turma.</li>
+<li><strong>Preencher Presença:</strong> Escolha data, marque presença e critérios opcionais.</li>
+<li><strong>Exportar CSV:</strong> Frequência do dia (com critérios extras).</li>
+<li><strong>Gerar Relatório:</strong> Selecione semana/mês, visualize estatísticas, exporte relatório.</li>
+<li><strong>Trocar Logo:</strong> Clique em "Trocar Logo" para customizar o logo do app.</li>
+</ul>
+<h2>Requisitos</h2>
+
+<ul>
+<li>Navegador moderno (Chrome, Edge, Firefox, Safari).</li>
+<li>Conexão à internet para acesso ao Firebase.</li>
+</ul>
+<h2>Personalização</h2>
+
+<ul>
+<li><strong>Logo:</strong> Clique para alterar o logo exibido.</li>
+<li><strong>Firebase:</strong> Use suas credenciais para garantir privacidade dos dados.</li>
+<li><strong>Estilos:</strong> Modifique o CSS ou utilize Tailwind para personalizar o visual.</li>
+</ul>
+<h2>Segurança e privacidade</h2>
+
+<ul>
+<li>Este projeto utiliza <strong>autenticação anônima</strong> do Firebase — cada usuário tem acesso exclusivo às suas turmas e registros.</li>
+<li><strong>Atenção:</strong> Os dados são salvos no Firestore do projeto indicado no <code>firebaseConfig</code>. Para uso em produção, configure regras de segurança apropriadas no <a href="https://console.firebase.google.com/" target="_blank">Console do Firebase</a>.</li>
+</ul>
+<h2>Créditos</h2>
+
+<p>Desenvolvido por <a href="https://github.com/franciscoclaudio" target="_blank">franciscoclaudio</a>.</p>
+<p>Baseado em conceitos de apps educacionais, com foco em simplicidade e facilidade de uso.</p>
+
+<hr>
+
+<p><strong>Dúvidas, sugestões ou problemas?</strong></p>
+<p>Abra uma <a href="https://github.com/franciscoclaudio/Frequencia-Alunos/issues" target="_blank">issue no GitHub</a> ou envie um PR!</p>
+
+
+        <div class="footer">
+            Documentação gerada automaticamente.
+        </div>
+    </div>
+</body>
+</html>
+            

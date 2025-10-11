@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação — 📊 Sistema de Registro de Frequência e Observações (Local/HTML)</title>
+    <style>
+        :root {
+            --color-primary: #4f46e5;
+            --color-secondary: #8b5cf6;
+            --color-pink: #ec4899;
+            --color-red: #ef4444;
+            --color-green: #10b981;
+            --color-dark-green: #059669;
+            --color-bg-light: #f9fafb;
+            --color-text-dark: #1f2937;
+            --color-text-light: #374151;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--color-bg-light);
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px 30px;
+            color: var(--color-text-dark);
+            overflow-x: auto;
+        }
+        h1 {
+            color: var(--color-primary);
+            font-size: 1.6em;
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: 700;
+        }
+        h2, h3 {
+            color: var(--color-text-light);
+            margin-top: 2em;
+            margin-bottom: 0.5em;
+        }
+        h2 {
+            font-size: 1.2em;
+        }
+        h3 {
+            font-size: 1em;
+        }
+        ul, ol {
+            margin-left: 1.4em;
+            margin-bottom: 1em;
+        }
+        li {
+            margin-bottom: 0.3em;
+        }
+        code, pre {
+            background: #f3f4f6;
+            color: #1f2937;
+            border-radius: 5px;
+            padding: 2px 6px;
+            font-size: 0.95em;
+        }
+        pre {
+            padding: 10px;
+            overflow-x: auto;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 2em 0;
+        }
+        a {
+            color: var(--color-primary);
+            text-decoration: underline;
+        }
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 1em;
+        }
+        .badge-list img {
+            vertical-align: middle;
+            height: 22px;
+        }
+        strong {
+            font-weight: 600;
+        }
+        p {
+            margin-bottom: 1em;
+        }
+        
+        /* Ajuste para cabeçalho do projeto */
+        .project-title {
+            color: var(--color-primary);
+            font-size: 1.6em;
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: 700;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px 10px;
+            }
+            .project-title {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="project-title">📊 Sistema de Registro de Frequência e Observações (Local/HTML)</h1>
+        
+
+<p>Este projeto é um aplicativo web de página única (SPA) para registro de frequência, observações pedagógicas e relatórios de alunos. Utiliza <strong>HTML, CSS (incluindo Tailwind via CDN) e JavaScript puro</strong>, com persistência local (Local Storage), permitindo uso totalmente offline e exportação dos dados.</p>
+
+<h2>⚡ Principais Funcionalidades</h2>
+
+<ul>
+<li><strong>Gestão de Turmas</strong></li>
+<li>Criar, editar e excluir turmas.</li>
+<li>Importar lista de alunos por arquivo <code>.txt</code> ou digitação manual.</li>
+<li>Personalizar nome da turma e lista de estudantes.</li>
+</ul>
+<ul>
+<li><strong>Registro de Frequência</strong></li>
+<li>Marcação rápida de presença/falta por aluno.</li>
+<li>Registro de data da aula.</li>
+<li>Campos para observações como participação, harmonia e pontualidade.</li>
+</ul>
+<ul>
+<li><strong>Relatórios</strong></li>
+<li>Geração de relatórios por período (semanal ou mensal).</li>
+<li>Visualização e exportação dos dados em formato CSV ou texto estruturado.</li>
+<li>Análise de presenças, faltas e participação por turma/aluno.</li>
+</ul>
+<ul>
+<li><strong>Exportação de Dados</strong></li>
+<li>Exportação de relatórios e dados brutos para arquivos <code>.txt</code> e <code>.csv</code>.</li>
+<li>Exportação direta do relatório gerado.</li>
+</ul>
+<ul>
+<li><strong>Interface Moderna</strong></li>
+<li>Visual limpo e responsivo, usando Tailwind CSS.</li>
+<li>Suporte à troca de logo do aplicativo.</li>
+<li>Notificações toast para feedback ao usuário.</li>
+</ul>
+<ul>
+<li><strong>Persistência Local</strong></li>
+<li>Todos os dados ficam salvos no navegador (Local Storage).</li>
+<li>Uso offline sem necessidade de servidor ou backend.</li>
+</ul>
+<h2>🛠️ Como Usar</h2>
+
+<p>1. <strong>Download:</strong> Certifique-se de que os arquivos <code>frequencia_alunos_local.html</code>, <code>frequencia_alunos_local_script.js</code> e <code>frequencia_alunos_local_styles.css</code> estão juntos na mesma pasta.</p>
+<p>2. <strong>Abrir:</strong> Clique duas vezes ou abra o arquivo <code>frequencia_alunos_local.html</code> em qualquer navegador moderno (Chrome, Firefox, Edge, etc.).</p>
+<p>3. <strong>Configurar:</strong> Adicione uma turma, importe ou escreva a lista de alunos, e comece a registrar presença e observações.</p>
+<p>4. <strong>Relatórios:</strong> Gere e exporte relatórios conforme necessidade.</p>
+<p>5. <strong>Offline:</strong> Todo o funcionamento é local, sem dependência de internet após baixar os arquivos.</p>
+
+<p>> <strong>Atenção:</strong> Os dados são salvos somente no navegador utilizado. Apagar o histórico ou cache pode excluir todas as informações.</p>
+
+<h2>🎨 Personalização</h2>
+
+<ul>
+<li>É possível alterar a logo do aplicativo via upload pela interface.</li>
+<li>Suporte a temas de cor com Tailwind configurado.</li>
+<li>Todos os campos importantes são customizáveis e fáceis de usar.</li>
+</ul>
+<h2>📂 Estrutura dos Arquivos</h2>
+
+<ul>
+<li><code>frequencia_alunos_local.html</code> – Página principal e interface.</li>
+<li><code>frequencia_alunos_local_script.js</code> – Lógica de funcionamento, manipulação de dados, Local Storage.</li>
+<li><code>frequencia_alunos_local_styles.css</code> – Estilos personalizados.</li>
+<li>(Opcional) Imagens/logos, listas de alunos em <code>.txt</code>.</li>
+</ul>
+<h2>💡 Dicas e Observações</h2>
+
+<ul>
+<li>Recomenda-se exportar relatórios frequentemente para backup externo.</li>
+<li>Ideal para uso em escolas, aulas particulares, cursos livres ou qualquer contexto que exija controle prático de frequência.</li>
+</ul>
+<hr>
+
+
+        <div class="footer">
+            Documentação gerada automaticamente.
+        </div>
+    </div>
+</body>
+</html>
+            

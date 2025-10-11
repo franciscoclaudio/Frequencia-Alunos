@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentação — Frequência Alunos</title>
+    <title>Documentação — Controle de Frequência de Alunos — LocalStorage Mobile App</title>
     <style>
         :root {
             --color-primary: #4f46e5;
@@ -35,7 +36,7 @@
             background: white;
             border-radius: 16px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-            max-width: 600px;
+            max-width: 800px;
             width: 100%;
             padding: 40px 30px;
             color: var(--color-text-dark);
@@ -103,11 +104,26 @@
             vertical-align: middle;
             height: 22px;
         }
+        strong {
+            font-weight: 600;
+        }
+        p {
+            margin-bottom: 1em;
+        }
+        
+        /* Ajuste para cabeçalho do projeto */
+        .project-title {
+            color: var(--color-primary);
+            font-size: 1.6em;
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: 700;
+        }
         @media (max-width: 600px) {
             .container {
                 padding: 24px 10px;
             }
-            h1 {
+            .project-title {
                 font-size: 1.2em;
             }
         }
@@ -115,53 +131,16 @@
 </head>
 <body>
     <div class="container">
-        <h1>Documentação — Frequência Alunos</h1>
-        <p>
-            Sistema para registro de frequência e observações pedagógicas de alunos. Este repositório reúne diferentes versões da aplicação, tanto para uso local quanto integrado ao Firebase, desenvolvidas em HTML, CSS e JavaScript.
-        </p>
+        <h1 class="project-title">Controle de Frequência de Alunos — LocalStorage Mobile App</h1>
+        
 
-        <h2>📂 Documentação das Versões</h2>
-        <ul>
-            <li>
-                <strong><a href="./App_Local/documentacao_A_LS.html" target="_blank">App_Local</a></strong> <span style="color: #ef4444; font-weight: 600;">AINDA EM DESENVOLVIMENTO</span><br>
-                Aplicação local, totalmente offline, baseada em HTML, CSS e JS puro.
-            </li>
-            <li>
-                <strong><a href="./App_Firebase/documentacao_A_FB.html" target="_blank">App_Firebase</a></strong> <span style="color: #ef4444; font-weight: 600;">AINDA EM DESENVOLVIMENTO</span><br>
-                Aplicação que utiliza o Firebase para persistência dos dados e sincronização.
-            </li>
-            <li>
-                <strong><a href="./Web_Local/documentacao_W_LS.html" target="_blank">Web_Local</a></strong><br>
-                Versão web para uso local, sem dependências externas.
-            </li>
-            <li>
-                <strong><a href="./Web_Firebase/documentacao_W_FB.html" target="_blank">Web_Firebase</a></strong><br>
-                Versão web que utiliza o Firebase para autenticação e armazenamento.
-            </li>
-        </ul>
+<h2>EM DESENVOLVIMENTO</h2>
 
-        <h2>💡 Sobre o projeto</h2>
-        <div class="badge-list">
-            <img src="https://img.shields.io/badge/JavaScript-72.3%25-yellow?style=flat-square" alt="JavaScript">
-            <img src="https://img.shields.io/badge/HTML-23%25-orange?style=flat-square" alt="HTML">
-            <img src="https://img.shields.io/badge/CSS-4.7%25-blue?style=flat-square" alt="CSS">
-        </div>
-        <ul>
-            <li>Registro de presença e observações pedagógicas</li>
-            <li>Gestão de turmas e alunos</li>
-            <li>Geração e exportação de relatórios</li>
-            <li>Persistência local ou em nuvem</li>
-        </ul>
-        <p>
-            Consulte o README de cada versão para orientações específicas de instalação, uso e funcionalidades.
-        </p>
-        <hr>
-        <p>
-            Para dúvidas ou sugestões, utilize as <a href="https://github.com/franciscoclaudio/Frequencia-Alunos/issues" target="_blank">issues do repositório</a>.
-        </p>
+
         <div class="footer">
-            Documentação da Frequência Alunos
+            Documentação gerada automaticamente.
         </div>
     </div>
 </body>
 </html>
+            
