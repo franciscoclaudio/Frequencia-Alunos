@@ -6,16 +6,16 @@ Sistema para registro de frequência e observações pedagógicas de alunos. Est
 
 Acesse as instruções detalhadas de cada versão através dos links abaixo:
 
-- [App_Local](./App_Local/README.md)  **AINDA EM DESENVOLVIMENTO**
+- [App_Local](./App_Local/readme.md)  **AINDA EM DESENVOLVIMENTO**
   Aplicação local, totalmente offline, baseada em HTML, CSS e JS puro.
 
-- [App_Firebase](./App_Firebase/README.md)  **AINDA EM DESENVOLVIMENTO**
+- [App_Firebase](./App_Firebase/readme.md)  **AINDA EM DESENVOLVIMENTO**
   Aplicação que utiliza o Firebase para persistência dos dados e sincronização.
 
-- [Web_Local](./Web_Local/README.md)  
+- [Web_Local](./Web_Local/readme.md)  
   Versão web para uso local, sem dependências externas.
 
-- [Web_Firebase](./Web_Firebase/README.md)  
+- [Web_Firebase](./Web_Firebase/readme.md)  
   Versão web que utiliza o Firebase para autenticação e armazenamento.
 
 ## 💡 Sobre o projeto
@@ -37,3 +37,4 @@ Consulte o README de cada versão para orientações específicas de instalaçã
 
 
 > Para dúvidas ou sugestões, utilize as [issues do repositório](https://github.com/franciscoclaudio/Frequencia-Alunos/issues).
+
