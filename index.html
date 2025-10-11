@@ -5,40 +5,123 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frequência Alunos</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
         }
-        h1 { color: #333; }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+        
+        .section-title {
+            color: #667eea;
+            font-size: 1.1em;
+            margin: 25px 0 15px 0;
+            font-weight: 600;
+        }
+        
         .links {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-top: 30px;
+            gap: 12px;
         }
+        
         a {
-            padding: 15px;
-            background: #0366d6;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             text-decoration: none;
-            border-radius: 5px;
+            border-radius: 8px;
             text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 500;
         }
+        
         a:hover {
-            background: #0256c7;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        a:active {
+            transform: translateY(0);
+        }
+        
+        .readme-link {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin-top: 10px;
+        }
+        
+        .readme-link:hover {
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+        
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #ddd, transparent);
+            margin: 25px 0;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Frequência Alunos</h1>
-    <p>Escolha a versão que deseja acessar:</p>
-    <div class="links">
-        <a href="Web_Firebase/frequencia_app_teste.html">Versão Web Firebase</a>
-        <a href="Web_Local/frequencia_alunos_local.html">Versão Web Local</a>
-        <a href="App_Firebase/frequencia_app_teste.html">App Firebase</a>
-        <a href="App_Local/frequencia_alunos_local.html">App Local</a>
+    <div class="container">
+        <h1>📚 Frequência Alunos</h1>
+        <p class="subtitle">Sistema de controle de frequência escolar</p>
+        
+        <div class="section-title">🚀 Versões Disponíveis</div>
+        <div class="links">
+            <a href="Web_Firebase/frequencia_app_teste.html">🌐 Versão Web Firebase</a>
+            <a href="Web_Local/frequencia_alunos_local.html">💻 Versão Web Local</a>
+            <a href="App_Firebase/frequencia_app_teste.html">📱 App Firebase</a>
+            <a href="App_Local/frequencia_alunos_local.html">📲 App Local</a>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="section-title">❓ Dúvidas e Documentação</div>
+        <div class="links">
+            <a href="https://github.com/franciscoclaudio/Frequencia-Alunos/blob/master/README.md" class="readme-link" target="_blank">📖 Ver Documentação (README)</a>
+        </div>
     </div>
 </body>
 </html>
