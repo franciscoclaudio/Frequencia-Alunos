@@ -5,196 +5,171 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frequência Alunos</title>
 		<style>
-		    /* Variáveis CSS para cores do estilo Tailwind (Indigo, Rosa, Roxo) 
-		    */
-		    :root {
-		        --color-primary: #4f46e5; /* Indigo-600 */
-		        --color-secondary: #8b5cf6; /* Violet-500 */
-		        --color-pink: #ec4899; /* Pink-500 */
-		        --color-red: #ef4444; /* Red-500 */
-		        --color-bg-light: #f9fafb; /* Gray-50 */
-		        --color-text-dark: #1f2937; /* Gray-800 */
-		        --color-text-light: #4b5563; /* Gray-600 */
-		    }
-		
-		    * {
-		        margin: 0;
-		        padding: 0;
-		        box-sizing: border-box;
-		    }
-		
-		    /* Fundo com gradiente mais vibrante (Indigo/Roxo/Rosa) */
-		    body {
-		        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-		        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 50%, #d946ef 100%); /* Indigo para um Roxo mais vivo */
-		        min-height: 100vh;
-		        display: flex;
-		        align-items: center;
-		        justify-content: center;
-		        padding: 20px;
-		        color: var(--color-text-dark);
-		    }
-		
-		    /* Cartão Principal */
-		    .container {
-		        background: white;
-		        border-radius: 12px;
-		        /* Sombra mais suave, moderna e multi-nível */
-		        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-		        max-width: 450px; /* Reduzindo um pouco o max-width para um visual mais 'app-like' */
-		        width: 100%;
-		        padding: 30px;
-		    }
-		
-		    /* Título */
-		    h1 {
-		        color: var(--color-text-dark);
-		        margin-bottom: 5px;
-		        font-size: 1.8em;
-		        text-align: center;
-		        font-weight: 700;
-		        display: flex;
-		        align-items: center;
-		        justify-content: center;
-		    }
-		
-		    h1 .emoji {
-		        margin-right: 8px;
-		        font-size: 1.1em;
-		    }
-		
-		    .subtitle {
-		        color: var(--color-text-light);
-		        text-align: center;
-		        margin-bottom: 30px;
-		        font-size: 0.9em;
-		        font-weight: 400;
-		    }
-		
-		    /* Títulos de Seção (Versões, Documentação) */
-		    h2 {
-		        color: var(--color-primary);
-		        font-size: 1.05em;
-		        margin: 20px 0 15px 0;
-		        font-weight: 600;
-		        text-align: left;
-		        display: flex;
-		        align-items: center;
-		    }
-		
-		    h2 .emoji {
-		        margin-right: 8px;
-		        font-size: 1.1em;
-		    }
-		    
-		    /* Estilo para cada item de link/versão */
-		    .version-link {
-		        display: flex;
-		        align-items: center;
-		        padding: 12px 15px;
-		        border: 1px solid #e5e7eb; /* Gray-200 */
-		        border-radius: 8px;
-		        margin-bottom: 12px;
-		        transition: all 0.2s ease-in-out;
-		        background-color: var(--color-bg-light);
-		    }
-		    
-		    .version-link:hover {
-		        border-color: var(--color-primary);
-		        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-		        background-color: white;
-		    }
-		
-		    .version-link .emoji {
-		        font-size: 1.5em;
-		        margin-right: 15px;
-		        min-width: 30px;
-		        text-align: center;
-		    }
-		
-		    .version-title {
-		        flex-grow: 1;
-		        color: var(--color-text-dark);
-		        font-weight: 600;
-		        text-decoration: none;
-		        padding: 0; /* Remove padding extra do <a> */
-		        background: none; /* Remove background do <a> */
-		        text-align: left;
-		        margin-right: 15px;
-		    }
-		
-		    .version-desc {
-		        color: var(--color-text-light);
-		        font-size: 0.8em;
-		        margin: 0;
-		        font-style: italic;
-		        display: none; /* Esconde a descrição para um visual mais limpo */
-		    }
-		
-		    /* Estilos para a seção de Documentação */
-		    .doc-section {
-		        margin-top: 30px;
-		        padding-top: 20px;
-		        border-top: 1px solid #e5e7eb;
-		    }
-		    
-		    .doc-text {
-		        color: var(--color-text-light);
-		        font-size: 0.9em;
-		        margin-bottom: 15px;
-		        line-height: 1.4;
-		    }
-		
-		    .doc-text .emoji {
-		        margin-right: 5px;
-		    }
-		
-		    /* Link de Documentação como Botão Gradiente */
-		    .doc-link {
-		        display: block;
-		        padding: 14px 20px;
-		        text-align: center;
-		        text-decoration: none;
-		        font-weight: 600;
-		        border-radius: 8px;
-		        color: white;
-		        background: linear-gradient(90deg, var(--color-pink) 0%, var(--color-red) 100%); /* Rosa para Vermelho */
-		        transition: transform 0.2s, box-shadow 0.2s;
-		        box-shadow: 0 4px 10px rgba(236, 72, 153, 0.4); /* Sombra rosa */
-		    }
-		    
-		    .doc-link:hover {
-		        transform: translateY(-1px);
-		        box-shadow: 0 6px 15px rgba(236, 72, 153, 0.6);
-		    }
-		
-		    .footer {
-		        text-align: center;
-		        margin-top: 30px;
-		        font-size: 0.75em;
-		        color: #9ca3af; /* Gray-400 */
-		    }
-		    
-		    /* Media Query para responsividade */
-		    @media (max-width: 480px) {
-		        .container {
-		            padding: 20px;
-		        }
-		        
-		        h1 {
-		            font-size: 1.6em;
-		        }
-		        
-		        .version-link {
-		            flex-direction: column;
-		            align-items: flex-start;
-		        }
-		        
-		        .version-link .emoji {
-		            margin-bottom: 5px;
-		        }
-		    }
-    </style>
+	        /* Variáveis CSS para cores do estilo Tailwind (Indigo, Rosa, Roxo) */
+	        :root {
+	            --color-primary: #4f46e5; /* Indigo-600 - Cor de ênfase (usada no arquivo anexo) */
+	            --color-secondary: #8b5cf6; /* Violet-500 */
+	            --color-pink: #ec4899; /* Pink-500 */
+	            --color-red: #ef4444; /* Red-500 */
+	            --color-bg-light: #f9fafb; /* Gray-50 */
+	            --color-text-dark: #1f2937; /* Gray-800 */
+	            --color-text-light: #4b5563; /* Gray-600 */
+	        }
+	        
+	        * {
+	            margin: 0;
+	            padding: 0;
+	            box-sizing: border-box;
+	        }
+	        
+	        /* Fundo com gradiente SÓBRIO (Azul escuro/Cinza) */
+	        body {
+	            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+	            /* Gradiente de cores sóbrias (Deep Blue/Dark Gray) */
+	            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); 
+	            min-height: 100vh;
+	            display: flex;
+	            align-items: center;
+	            justify-content: center;
+	            padding: 20px;
+	            color: var(--color-text-dark);
+	        }
+	        
+	        /* Cartão Principal */
+	        .container {
+	            background: white;
+	            border-radius: 16px;
+	            /* Sombra mais suave e elevada */
+	            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); /* Aumentei a sombra para destacar no fundo escuro */
+	            max-width: 400px; 
+	            width: 100%;
+	            padding: 40px 30px;
+	        }
+	        
+	        /* Título */
+	        h1 {
+	            color: var(--color-text-dark);
+	            margin-bottom: 5px;
+	            font-size: 1.8em;
+	            text-align: center;
+	            font-weight: 700;
+	        }
+	        
+	        h1 .emoji {
+	            margin-right: 8px;
+	            font-size: 1.1em;
+	            display: none; 
+	        }
+	        
+	        .subtitle {
+	            color: var(--color-text-light);
+	            text-align: center;
+	            margin-bottom: 30px;
+	            font-size: 0.9em;
+	            font-weight: 400;
+	        }
+	        
+	        /* Títulos de Seção (Versões, Documentação) */
+	        h2 {
+	            color: var(--color-text-light);
+	            font-size: 1em;
+	            margin: 20px 0 15px 0;
+	            font-weight: 500;
+	            text-align: left;
+	            display: flex;
+	            align-items: center;
+	            border-top: 1px solid #e5e7eb; /* Divisor suave (Gray-200) */
+	            padding-top: 20px;
+	        }
+	
+	        h2:first-of-type {
+	            border-top: none;
+	            padding-top: 0;
+	        }
+	        
+	        h2 .emoji {
+	            margin-right: 8px;
+	            font-size: 1.1em;
+	        }
+	        
+	        /* Estilo para Botões/Links de Versão (Visual principal) */
+	        .version-link, .doc-link {
+	            display: block;
+	            padding: 14px 20px;
+	            text-align: center;
+	            text-decoration: none;
+	            font-weight: 600;
+	            border-radius: 8px;
+	            color: white;
+	            margin-bottom: 12px;
+	            transition: transform 0.2s, box-shadow 0.2s;
+	            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+	            width: 100%; 
+	        }
+	
+	        /* Botões de Versão - Gradiente Indigo (Cor primária do CSS anexo) */
+	        .version-link {
+	            /* Gradiente usando a cor primaria (#4f46e5) para manter a coerência */
+	            background: linear-gradient(90deg, var(--color-primary) 0%, #6366f1 100%); /* Indigo-600 para Indigo-500 */
+	            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+	        }
+	        
+	        /* Botão de Documentação - Gradiente Rosa/Vermelho (Cor secundária) */
+	        .doc-link {
+	            background: linear-gradient(90deg, var(--color-pink) 0%, var(--color-red) 100%); 
+	            box-shadow: 0 5px 15px rgba(236, 72, 153, 0.4);
+	            margin-top: 15px; 
+	        }
+	        
+	        /* Efeitos de Hover */
+	        .version-link:hover, .doc-link:hover {
+	            transform: translateY(-2px);
+	            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); 
+	        }
+	        
+	        .version-link:active, .doc-link:active {
+	            transform: translateY(0);
+	        }
+	        
+	        .version-link .emoji {
+	            margin-right: 10px;
+	            font-size: 1.1em;
+	        }
+	        
+	        /* Seção de Documentação */
+	        .doc-section {
+	            padding-top: 0;
+	        }
+	        
+	        .doc-text {
+	            color: var(--color-text-light);
+	            font-size: 0.9em;
+	            margin-bottom: 15px;
+	            line-height: 1.4;
+	        }
+	        
+	        .doc-text .emoji {
+	            margin-right: 5px;
+	        }
+	        
+	        .footer {
+	            text-align: center;
+	            margin-top: 30px;
+	            font-size: 0.75em;
+	            color: #9ca3af; /* Gray-400 */
+	        }
+	        
+	        /* Media Query para responsividade */
+	        @media (max-width: 480px) {
+	            .container {
+	                padding: 30px 20px;
+	            }
+	            
+	            h1 {
+	                font-size: 1.6em;
+	            }
+	        }
+    	</style>
 </head>
 <body>
     <div class="container">
