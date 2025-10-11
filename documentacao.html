@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação — Frequência Alunos</title>
+    <style>
+        :root {
+            --color-primary: #4f46e5;
+            --color-secondary: #8b5cf6;
+            --color-pink: #ec4899;
+            --color-red: #ef4444;
+            --color-green: #10b981;
+            --color-dark-green: #059669;
+            --color-bg-light: #f9fafb;
+            --color-text-dark: #1f2937;
+            --color-text-light: #374151;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--color-bg-light);
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px 30px;
+            color: var(--color-text-dark);
+            overflow-x: auto;
+        }
+        h1 {
+            color: var(--color-primary);
+            font-size: 1.6em;
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: 700;
+        }
+        h2, h3 {
+            color: var(--color-text-light);
+            margin-top: 2em;
+            margin-bottom: 0.5em;
+        }
+        h2 {
+            font-size: 1.2em;
+        }
+        h3 {
+            font-size: 1em;
+        }
+        ul, ol {
+            margin-left: 1.4em;
+            margin-bottom: 1em;
+        }
+        li {
+            margin-bottom: 0.3em;
+        }
+        code, pre {
+            background: #f3f4f6;
+            color: #1f2937;
+            border-radius: 5px;
+            padding: 2px 6px;
+            font-size: 0.95em;
+        }
+        pre {
+            padding: 10px;
+            overflow-x: auto;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 2em 0;
+        }
+        a {
+            color: var(--color-primary);
+            text-decoration: underline;
+        }
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 1em;
+        }
+        .badge-list img {
+            vertical-align: middle;
+            height: 22px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px 10px;
+            }
+            h1 {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Documentação — Frequência Alunos</h1>
+        <p>
+            Sistema para registro de frequência e observações pedagógicas de alunos. Este repositório reúne diferentes versões da aplicação, tanto para uso local quanto integrado ao Firebase, desenvolvidas em HTML, CSS e JavaScript.
+        </p>
+
+        <h2>📂 Documentação das Versões</h2>
+        <ul>
+            <li>
+                <strong><a href="./App_Local/README.md" target="_blank">App_Local</a></strong> <span style="color: #ef4444; font-weight: 600;">AINDA EM DESENVOLVIMENTO</span><br>
+                Aplicação local, totalmente offline, baseada em HTML, CSS e JS puro.
+            </li>
+            <li>
+                <strong><a href="./App_Firebase/README.md" target="_blank">App_Firebase</a></strong> <span style="color: #ef4444; font-weight: 600;">AINDA EM DESENVOLVIMENTO</span><br>
+                Aplicação que utiliza o Firebase para persistência dos dados e sincronização.
+            </li>
+            <li>
+                <strong><a href="./Web_Local/README.md" target="_blank">Web_Local</a></strong><br>
+                Versão web para uso local, sem dependências externas.
+            </li>
+            <li>
+                <strong><a href="./Web_Firebase/README.md" target="_blank">Web_Firebase</a></strong><br>
+                Versão web que utiliza o Firebase para autenticação e armazenamento.
+            </li>
+        </ul>
+
+        <h2>💡 Sobre o projeto</h2>
+        <div class="badge-list">
+            <img src="https://img.shields.io/badge/JavaScript-72.3%25-yellow?style=flat-square" alt="JavaScript">
+            <img src="https://img.shields.io/badge/HTML-23%25-orange?style=flat-square" alt="HTML">
+            <img src="https://img.shields.io/badge/CSS-4.7%25-blue?style=flat-square" alt="CSS">
+        </div>
+        <ul>
+            <li>Registro de presença e observações pedagógicas</li>
+            <li>Gestão de turmas e alunos</li>
+            <li>Geração e exportação de relatórios</li>
+            <li>Persistência local ou em nuvem</li>
+        </ul>
+        <p>
+            Consulte o README de cada versão para orientações específicas de instalação, uso e funcionalidades.
+        </p>
+        <hr>
+        <p>
+            Para dúvidas ou sugestões, utilize as <a href="https://github.com/franciscoclaudio/Frequencia-Alunos/issues" target="_blank">issues do repositório</a>.
+        </p>
+        <div class="footer">
+            Documentação da Frequência Alunos
+        </div>
+    </div>
+</body>
+</html>
