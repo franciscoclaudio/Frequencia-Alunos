@@ -11,6 +11,8 @@
 	            --color-secondary: #8b5cf6; /* Violet-500 */
 	            --color-pink: #ec4899; /* Pink-500 */
 	            --color-red: #ef4444; /* Red-500 */
+	            --color-green: #10b981; /* Emerald-500: Cor para o botão de Documentação (verde) */
+	            --color-dark-green: #059669; /* Emerald-600 */
 	            --color-bg-light: #f9fafb; /* Gray-50 */
 	            --color-text-dark: #1f2937; /* Gray-800 */
 	            --color-text-light: #4b5563; /* Gray-600 */
@@ -46,9 +48,9 @@
 	            padding: 40px 30px;
 	        }
 	        
-	        /* Título */
+	        /* Título - Alterado para ser AZUL (var(--color-primary)) */
 	        h1 {
-	            color: var(--color-text-dark);
+	            color: var(--color-primary); /* Azul/Indigo */
 	            margin-bottom: 5px;
 	            font-size: 1.8em;
 	            text-align: center;
@@ -114,10 +116,10 @@
 	            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
 	        }
 	        
-	        /* Botão de Documentação - Gradiente Rosa/Vermelho (Cor secundária) */
+	        /* Botão de Documentação - Gradiente VERDE (Novo estilo) */
 	        .doc-link {
-	            background: linear-gradient(90deg, var(--color-pink) 0%, var(--color-red) 100%); 
-	            box-shadow: 0 5px 15px rgba(236, 72, 153, 0.4);
+	            background: linear-gradient(90deg, var(--color-green) 0%, var(--color-dark-green) 100%); /* Verde Esmeralda */
+	            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
 	            margin-top: 15px; 
 	        }
 	        
