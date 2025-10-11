@@ -4,174 +4,230 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frequência Alunos</title>
-		<style>
-	        /* Variáveis CSS para cores do estilo Tailwind (Indigo, Rosa, Roxo) */
-	        :root {
-	            --color-primary: #4f46e5; /* Indigo-600 - Cor de ênfase (usada no arquivo anexo) */
-	            --color-secondary: #8b5cf6; /* Violet-500 */
-	            --color-pink: #ec4899; /* Pink-500 */
-	            --color-red: #ef4444; /* Red-500 */
-	            --color-green: #10b981; /* Emerald-500: Cor para o botão de Documentação (verde) */
-	            --color-dark-green: #059669; /* Emerald-600 */
-	            --color-bg-light: #f9fafb; /* Gray-50 */
-	            --color-text-dark: #1f2937; /* Gray-800 */
-	            --color-text-light: #4b5563; /* Gray-600 */
-	        }
-	        
-	        * {
-	            margin: 0;
-	            padding: 0;
-	            box-sizing: border-box;
-	        }
-	        
-	        /* Fundo com gradiente SÓBRIO (Azul escuro/Cinza) */
-	        body {
-	            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-	            /* Gradiente de cores sóbrias (Deep Blue/Dark Gray) */
-	            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); 
-	            min-height: 100vh;
-	            display: flex;
-	            align-items: center;
-	            justify-content: center;
-	            padding: 20px;
-	            color: var(--color-text-dark);
-	        }
-	        
-	        /* Cartão Principal */
-	        .container {
-	            background: white;
-	            border-radius: 16px;
-	            /* Sombra mais suave e elevada */
-	            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); /* Aumentei a sombra para destacar no fundo escuro */
-	            max-width: 400px; 
-	            width: 100%;
-	            padding: 40px 30px;
-	        }
-	        
-	        /* Título - Alterado para ser AZUL (var(--color-primary)) */
-	        h1 {
-	            color: var(--color-primary); /* Azul/Indigo */
-	            margin-bottom: 5px;
-	            font-size: 1.8em;
-	            text-align: center;
-	            font-weight: 700;
-	        }
-	        
-	        h1 .emoji {
-	            margin-right: 8px;
-	            font-size: 1.1em;
-	            display: none; 
-	        }
-	        
-	        .subtitle {
-	            color: var(--color-text-light);
-	            text-align: center;
-	            margin-bottom: 30px;
-	            font-size: 0.9em;
-	            font-weight: 400;
-	        }
-	        
-	        /* Títulos de Seção (Versões, Documentação) */
-	        h2 {
-	            color: var(--color-text-light);
-	            font-size: 1em;
-	            margin: 20px 0 15px 0;
-	            font-weight: 500;
-	            text-align: left;
-	            display: flex;
-	            align-items: center;
-	            border-top: 1px solid #e5e7eb; /* Divisor suave (Gray-200) */
-	            padding-top: 20px;
-	        }
-	
-	        h2:first-of-type {
-	            border-top: none;
-	            padding-top: 0;
-	        }
-	        
-	        h2 .emoji {
-	            margin-right: 8px;
-	            font-size: 1.1em;
-	        }
-	        
-	        /* Estilo para Botões/Links de Versão (Visual principal) */
-	        .version-link, .doc-link {
-	            display: block;
-	            padding: 14px 20px;
-	            text-align: center;
-	            text-decoration: none;
-	            font-weight: 600;
-	            border-radius: 8px;
-	            color: white;
-	            margin-bottom: 12px;
-	            transition: transform 0.2s, box-shadow 0.2s;
-	            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-	            width: 100%; 
-	        }
-	
-	        /* Botões de Versão - Gradiente Indigo (Cor primária do CSS anexo) */
-	        .version-link {
-	            /* Gradiente usando a cor primaria (#4f46e5) para manter a coerência */
-	            background: linear-gradient(90deg, var(--color-primary) 0%, #6366f1 100%); /* Indigo-600 para Indigo-500 */
-	            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
-	        }
-	        
-	        /* Botão de Documentação - Gradiente VERDE (Novo estilo) */
-	        .doc-link {
-	            background: linear-gradient(90deg, var(--color-green) 0%, var(--color-dark-green) 100%); /* Verde Esmeralda */
-	            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
-	            margin-top: 15px; 
-	        }
-	        
-	        /* Efeitos de Hover */
-	        .version-link:hover, .doc-link:hover {
-	            transform: translateY(-2px);
-	            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); 
-	        }
-	        
-	        .version-link:active, .doc-link:active {
-	            transform: translateY(0);
-	        }
-	        
-	        .version-link .emoji {
-	            margin-right: 10px;
-	            font-size: 1.1em;
-	        }
-	        
-	        /* Seção de Documentação */
-	        .doc-section {
-	            padding-top: 0;
-	        }
-	        
-	        .doc-text {
-	            color: var(--color-text-light);
-	            font-size: 0.9em;
-	            margin-bottom: 15px;
-	            line-height: 1.4;
-	        }
-	        
-	        .doc-text .emoji {
-	            margin-right: 5px;
-	        }
-	        
-	        .footer {
-	            text-align: center;
-	            margin-top: 30px;
-	            font-size: 0.75em;
-	            color: #9ca3af; /* Gray-400 */
-	        }
-	        
-	        /* Media Query para responsividade */
-	        @media (max-width: 480px) {
-	            .container {
-	                padding: 30px 20px;
-	            }
-	            
-	            h1 {
-	                font-size: 1.6em;
-	            }
-	        }
-    	</style>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequência Alunos</title>
+    <style>
+        /* Variáveis CSS para cores do estilo Tailwind (Indigo, Rosa, Roxo) */
+        :root {
+            --color-primary: #4f46e5; /* Indigo-600 - Cor de ênfase (usada no arquivo anexo) */
+            --color-secondary: #8b5cf6; /* Violet-500 */
+            --color-pink: #ec4899; /* Pink-500 */
+            --color-red: #ef4444; /* Red-500 */
+            --color-green: #10b981; /* Emerald-500: Cor para o botão de Documentação (verde) */
+            --color-dark-green: #059669; /* Emerald-600 */
+            --color-bg-light: #f9fafb; /* Gray-50 */
+            --color-text-dark: #1f2937; /* Gray-800 */
+            --color-text-light: #4b5563; /* Gray-600 */
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* Fundo com gradiente SÓBRIO (Azul escuro/Cinza) */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            /* Gradiente de cores sóbrias (Deep Blue/Dark Gray) */
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); 
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--color-text-dark);
+        }
+        
+        /* Cartão Principal */
+        .container {
+            background: white;
+            border-radius: 16px;
+            /* Sombra mais suave e elevada */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); /* Aumentei a sombra para destacar no fundo escuro */
+            max-width: 400px; 
+            width: 100%;
+            padding: 40px 30px;
+        }
+        
+        /* Título - Alterado para ser AZUL (var(--color-primary)) */
+        h1 {
+            color: var(--color-primary); /* Azul/Indigo */
+            margin-bottom: 5px;
+            font-size: 1.8em;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        h1 .emoji {
+            margin-right: 8px;
+            font-size: 1.1em;
+            display: none; 
+        }
+        
+        .subtitle {
+            color: var(--color-text-light);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+            font-weight: 400;
+        }
+        
+        /* Títulos de Seção (Versões, Documentação) */
+        h2 {
+            color: var(--color-text-light);
+            font-size: 1em;
+            margin: 20px 0 15px 0;
+            font-weight: 500;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #e5e7eb; /* Divisor suave (Gray-200) */
+            padding-top: 20px;
+        }
+
+        h2:first-of-type {
+            border-top: none;
+            padding-top: 0;
+        }
+        
+        h2 .emoji {
+            margin-right: 8px;
+            font-size: 1.1em;
+        }
+        
+        /* Estilo para Botões/Links de Versão (Visual principal) */
+        .version-link, .doc-link {
+            display: block;
+            padding: 14px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            
+            /* Cor do texto PADRÃO: Verde-Limão Claro (usado nos botões AZUIS) */
+            color: #d9f99d; 
+            
+            margin-bottom: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%; 
+        }
+
+        /* Botões de Versão - Gradiente Indigo (Cor primária) */
+        .version-link {
+            background: linear-gradient(90deg, var(--color-primary) 0%, #6366f1 100%); /* Indigo-600 para Indigo-500 */
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+        }
+        
+        /* Botão de Documentação - Gradiente VERDE */
+        .doc-link {
+            /* Cor do texto sobreescrita para AZUL/INDIGO (usado no botão VERDE) */
+            color: var(--color-primary); 
+            
+            background: linear-gradient(90deg, var(--color-green) 0%, var(--color-dark-green) 100%); /* Verde Esmeralda */
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+            margin-top: 15px; 
+        }
+        
+        /* Efeitos de Hover */
+        .version-link:hover, .doc-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); 
+        }
+        
+        .version-link:active, .doc-link:active {
+            transform: translateY(0);
+        }
+        
+        .version-link .emoji {
+            margin-right: 10px;
+            font-size: 1.1em;
+        }
+        
+        /* Seção de Documentação */
+        .doc-section {
+            padding-top: 0;
+        }
+        
+        .doc-text {
+            color: var(--color-text-light);
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        
+        .doc-text .emoji {
+            margin-right: 5px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.75em;
+            color: #9ca3af; /* Gray-400 */
+        }
+        
+        /* Media Query para responsividade */
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 1.6em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Frequência Alunos</h1>
+        <p class="subtitle">Sistema de controle de frequência escolar</p>
+        
+        <h2><span class="emoji">🚀</span>Versões Disponíveis</h2>
+        
+        <!-- Links de Versão (AZUIS com texto VERDE) -->
+        <a href="Web_Firebase/frequencia_app_teste.html" class="version-link">
+            <span class="emoji">🌐</span>Versão Web Firebase
+        </a>
+        
+        <a href="Web_Local/frequencia_alunos_local.html" class="version-link">
+            <span class="emoji">💻</span>Versão Web Local
+        </a>
+        
+        <a href="App_Firebase/frequencia_app_teste.html" class="version-link">
+            <span class="emoji">📱</span>App Firebase
+        </a>
+        
+        <a href="App_Local/frequencia_alunos_local.html" class="version-link">
+            <span class="emoji">📲</span>App Local
+        </a>
+        
+        <div class="doc-section">
+            <h2><span class="emoji">❓</span>Dúvidas e Documentação</h2>
+            
+            <p class="doc-text">
+                <span class="emoji">📖</span>
+                Consulte a documentação completa para instruções detalhadas, perguntas frequentes e guia de uso do sistema.
+            </p>
+            
+            <!-- Link de Documentação (VERDE com texto AZUL) -->
+            <a href="readme.md" target="_blank" class="doc-link">
+                <span class="emoji">📄</span>Ver Documentação
+            </a>
+        </div>
+        
+        <div class="footer">
+            Sistema desenvolvido para gestão escolar
+        </div>
+    </div>
+</body>
+</html>
+
 </head>
 <body>
     <div class="container">
