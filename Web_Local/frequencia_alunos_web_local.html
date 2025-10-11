@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Frequência - Firestore</title>
+    <title>Registro de Frequência - Local Storage</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="frequencia_app_teste_styles.css">
+    <link rel="stylesheet" href="frequencia_alunos_web_local_styles.css">
     <script>
         tailwind.config = {
             theme: {
@@ -28,7 +28,7 @@
             <header class="pb-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3 mb-2">
                     <div class="flex flex-col items-center">
-                        <img id="logoImg" src="../img/Logo_A_FB.png"
+                        <img id="logoImg" src="../img/Logo_W_LS.png"
                             alt="Logo do Aplicativo"
                             class="w-12 h-12 rounded-full shadow-md object-cover">
                         <label for="logoUpload" class="text-xs text-center text-primary underline mt-1">Trocar Logo</label>
@@ -36,16 +36,15 @@
                     </div>
                     <div class="flex-grow">
                         <h1 class="text-3xl font-bold text-primary">Controle de Frequência</h1>
-                        <p id="userIdDisplay" class="text-sm text-gray-500 mt-1">Carregando usuário...</p>
+                        <p id="userIdDisplay" class="text-sm text-gray-500 mt-1">Armazenamento Local (Navegador)</p>
                     </div>
                 </div>
             </header>
 
-            <div id="loadingIndicator" class="text-center py-10">
+            <div id="loadingIndicator" class="text-center py-10 hidden">
                 <p class="text-xl text-primary font-medium">Conectando ao Firebase...</p>
             </div>
 
-            <!-- MENU INICIAL -->
             <div id="menuInicial" class="hidden space-y-6">
                 <div class="p-4 bg-primary/10 rounded-lg border border-primary/20 shadow-inner">
                     <h2 class="text-xl font-semibold text-primary mb-3">Selecione a Turma</h2>
@@ -70,7 +69,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button id="btnPreencherPresenca" class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-6 px-4 rounded-lg shadow-lg transition-all duration-150 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" disabled>
-                        <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                         </svg>
                         <span class="text-lg">Preencher Presença</span>
@@ -87,7 +86,6 @@
                 </div>
             </div>
 
-            <!-- TELA DE PREENCHIMENTO DE PRESENÇA -->
             <div id="telaPresenca" class="hidden space-y-6">
                 <button id="btnVoltarMenu" class="flex items-center text-primary hover:text-indigo-700 font-medium transition-colors duration-150">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,7 +127,6 @@
                 </div>
             </div>
 
-            <!-- TELA DE RELATÓRIOS -->
             <div id="telaRelatorio" class="hidden space-y-6">
                 <button id="btnVoltarMenuRelatorio" class="flex items-center text-primary hover:text-indigo-700 font-medium transition-colors duration-150">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,8 +175,7 @@
                         </button>
                     </div>
                     <div id="relatorioConteudo" class="scrollable-content space-y-3">
-                        <!-- Conteúdo do relatório será inserido aqui -->
-                    </div>
+                        </div>
                 </div>
             </div>
             
@@ -214,6 +210,6 @@
             </div>
         </div>
     </div>
-    <script type="module" src="frequencia_app_teste_script.js"></script>
+    <script src="frequencia_alunos_web_local_script.js"></script>
 </body>
 </html>
