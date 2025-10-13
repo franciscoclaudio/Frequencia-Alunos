@@ -2,20 +2,20 @@
   "name": "Controle de Frequência de Alunos",
   "short_name": "Frequência",
   "description": "App para registro e análise de frequência de alunos",
-  "start_url": "/App_Firebase/frequencia_app_fb.html",
+  "start_url": "/Frequencia-Alunos/App_Firebase/frequencia_app_fb.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4f46e5",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/img/icon.png",
+      "src": "/Frequencia-Alunos/img/icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "../img/icon.png",
+      "src": "/Frequencia-Alunos/img/icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -23,7 +23,7 @@
   ],
   "screenshots": [
     {
-      "src": "/img/icon.png",
+      "src": "/Frequencia-Alunos/img/icon.png",
       "sizes": "540x720",
       "type": "image/png"
     }
