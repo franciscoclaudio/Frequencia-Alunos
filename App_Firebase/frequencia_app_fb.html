@@ -2,7 +2,27 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Frequência">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Ícones para iOS -->
+    <link rel="apple-touch-icon" href="../img/apple-icon.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="../img/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../img/apple-icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="../img/apple-icon-167x167.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../img/icon.png">
+    
     <title>Registro de Frequência - Firestore</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../styles/main_styles.css">
@@ -22,14 +42,65 @@
             }
         }
     </script>
+    
+    <!-- CSS adicional para melhor experiência mobile -->
+    <style>
+        /* Remove seleção de texto em elementos interativos */
+        button, .clickable {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+        
+        /* Melhora o scroll em mobile */
+        .scrollable-content {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Ajuste para telas pequenas */
+        @media (max-width: 640px) {
+            .container-app {
+                padding: 0.5rem;
+            }
+        }
+        
+        /* Indicador de instalação do PWA */
+        #installPrompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            max-width: 90%;
+        }
+    </style>
 </head>
 <body class="font-sans">
+    <!-- Botão de Instalação do PWA (aparece quando disponível) -->
+    <div id="installPrompt" class="hidden bg-primary text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <div class="flex-grow">
+            <p class="font-bold">Instalar App</p>
+            <p class="text-xs opacity-90">Use como aplicativo</p>
+        </div>
+        <button id="installBtn" class="bg-white text-primary px-4 py-2 rounded font-bold hover:bg-gray-100">
+            Instalar
+        </button>
+        <button id="dismissInstall" class="text-white hover:text-gray-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+
     <div class="container-app">
         <div class="w-full max-w-2xl bg-white p-6 md:p-8 rounded-xl shadow-2xl space-y-6">
             <header class="pb-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3 mb-2">
                     <div class="flex flex-col items-center">
-                        <img id="logoImg" src="../img/Logo_A_FB.png"
+                        <img id="logoImg" src="../img/Logo_W_FB.png"
                             alt="Logo do Aplicativo"
                             class="w-12 h-12 rounded-full shadow-md object-cover">
                         <label for="logoUpload" class="text-xs text-center text-primary underline mt-1">Trocar Logo</label>
@@ -215,6 +286,64 @@
             </div>
         </div>
     </div>
-    <script type="module" src="requencia_app_fb_script.js"></script>
+    
+    <!-- Script de Registro do Service Worker -->
+    <script>
+        // Registra o Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then((registration) => {
+                        console.log('✅ Service Worker registrado:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('❌ Erro ao registrar Service Worker:', error);
+                    });
+            });
+        }
+
+        // Lógica de instalação do PWA
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installBtn = document.getElementById('installBtn');
+        const dismissInstall = document.getElementById('dismissInstall');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Verifica se já foi instalado ou dismissado
+            if (!localStorage.getItem('pwaInstallDismissed')) {
+                installPrompt.classList.remove('hidden');
+            }
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                console.log('✅ PWA instalado com sucesso');
+            }
+            
+            deferredPrompt = null;
+            installPrompt.classList.add('hidden');
+        });
+
+        dismissInstall.addEventListener('click', () => {
+            installPrompt.classList.add('hidden');
+            localStorage.setItem('pwaInstallDismissed', 'true');
+        });
+
+        // Detecta quando o app foi instalado
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA instalado e adicionado à tela inicial');
+            installPrompt.classList.add('hidden');
+        });
+    </script>
+    
+    <script type="module" src="frequencia_web_fb_script.js"></script>
 </body>
 </html>
