@@ -55,8 +55,9 @@ self.addEventListener('fetch', (event) => {
           if (response) {
             return response;
           }
-          // Se não estiver no cache, retorna uma página offline básica
+          // Se a requisição for uma navegação (carregamento de página)
           if (event.request.mode === 'navigate') {
+            // Tenta servir a página HTML principal cacheada
             return caches.match('/Frequencia-Alunos/App_Firebase/frequencia_app_fb.html');
           }
         });
