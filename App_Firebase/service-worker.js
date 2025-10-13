@@ -2,9 +2,9 @@ const CACHE_NAME = 'frequencia-alunos-v1';
 const urlsToCache = [
   '/App_Firebase/frequencia_app_fb.html',
   '/App_Firebase/frequencia_app_fb_script.js',
-  '../styles/main_styles.css',
-  '../styles/secondary_styles.css',
-  '../img/icon.png',
+  '/App_Firebase/styles/main_styles.css',
+  '/App_Firebase/styles/secondary_styles.css',
+  '/img/icon.png',
   'https://cdn.tailwindcss.com'
 ];
 
