@@ -1,10 +1,10 @@
 const CACHE_NAME = 'frequencia-alunos-v1';
 const urlsToCache = [
-  '/App_Firebase/frequencia_app_fb.html',
-  '/App_Firebase/frequencia_app_fb_script.js',
-  '/App_Firebase/styles/main_styles.css',
-  '/App_Firebase/styles/secondary_styles.css',
-  '/img/icon.png',
+  '/Frequencia-Alunos/App_Firebase/frequencia_app_fb.html',
+  '/Frequencia-Alunos/App_Firebase/frequencia_app_fb_script.js',
+  '/Frequencia-Alunos/styles/main_styles.css',
+  '/Frequencia-Alunos/styles/secondary_styles.css',
+  '/Frequencia-Alunos/img/icon.png',
   'https://cdn.tailwindcss.com'
 ];
 
@@ -57,7 +57,7 @@ self.addEventListener('fetch', (event) => {
           }
           // Se não estiver no cache, retorna uma página offline básica
           if (event.request.mode === 'navigate') {
-            return caches.match('/App_Firebase/frequencia_app_fb.html');
+            return caches.match('/Frequencia-Alunos/App_Firebase/frequencia_app_fb.html');
           }
         });
       })
