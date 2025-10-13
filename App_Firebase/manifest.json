@@ -2,7 +2,7 @@
   "name": "Controle de Frequência de Alunos",
   "short_name": "Frequência",
   "description": "App para registro e análise de frequência de alunos",
-  "start_url": "/Web_Firebase/frequencia_web_fb.html",
+  "start_url": "/Web_Firebase/frequencia_app_fb.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4f46e5",
